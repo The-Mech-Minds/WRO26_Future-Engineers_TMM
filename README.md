@@ -200,7 +200,9 @@ wait until the Pi has fully halted and all activity LEDs stop before disconnecti
      - Pi powered from a 30W power band with a 5V/3A capable output.
      - Motor driver VM receives 7.4V battery power; polarity checked.
      - Pi GND, motor-driver GND, and servo-supply GND are common.
-     - Servo signal connected to GPIO18 (physical pin 12).
+     - Arduino Uno connected to the Pi over USB, with steering_servo.ino already uploaded to it.
+     - Arduino's serial port name confirmed on the Pi (ls/dev/tty*) and matches SERIAL_PORT in the code.
+     - Servo signal connected to Arduino pin D9 (not a Pi GPIO pin).
      - Steering center verified at 1000µs before allowing the robot to move.
      - Steering range confirmed: RIGHT 850, CENTER 1000, LEFT 1150.
      - Both motors rotate in the physical forward direction (A: 0/1, B: 1/0).
