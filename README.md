@@ -83,6 +83,12 @@ The robot uses a single forward-facing USB camera for obstacle detection, a dual
      function: Ground
      connection: Common GND
 
+   4.4 Arduino Uno connection
+   - Arduino USB port → Raspberry Pi USB port (carries both power to the Arduino and the serial data link).
+   - Arduino D9 → Servo signal wire.
+   - Arduino GND → Common ground (same ground as Pi, motor driver, and BEC/buck).
+   - The Pi sends steering commands to the Arduino as simple serial messages; the Arduino sketch reads these and converts them into the servo PWM signal itself.
+
 5. Raspberry Pi Setup
    Build configuration used:
    - Hostname: tmm
@@ -97,14 +103,20 @@ The robot uses a single forward-facing USB camera for obstacle detection, a dual
      ssh-keygen -R tmm.local
      ssh pi@tmm.local
 
-   5.2 Remote desktop (VNC)
+   5.2 Arduino setup
+   - Install the Arduino IDE on the development machine used to program the Arduino.
+   - Upload arduino/steering_servo.ino to the Arduino Uno over USB before connecting it the Pi for normal operation.
+   - Confirm the Arduino's serial port name/number
+   - **********
+
+   5.3 Remote desktop (VNC)
    (enable VNC from Raspberry Pi configuration rather than running a standalone server, so the VNC session shares the active desktop instead of creating a sperate one)
    sudo raspi-config
    sudo reboot
 connect from a VNC viewer to tmm.local (or the IP from hostname -I).
 only use a standalone TigerVNC server (tigervnc-standalone-server, vncserver :1) if a separate virtual desktop session is specifically needed, it does not share the Pi's physical desktop.
 
-6. Software Environment
+7. Software Environment
    sudo apt update
    sudo apt install -y python3-lgpio python3-opencv python3-smbus2 i2c-tools
    verify:
@@ -113,7 +125,7 @@ only use a standalone TigerVNC server (tigervnc-standalone-server, vncserver :1)
    python3 -c "import smbus2; print('smbus2 OK')"
 (Raspberry Pi OS Trixie: don't rely on the older pigpio daemon package for this build, all GPIO code in this project uses lgpio)
 
-7. GPIO Pin assignment
+8. GPIO Pin assignment
    - Motor A IN1: GPIO17 - PIN 11
    - Motor A IN2: GPIO27 - PIN 13
    - Motor B IN1: GPIO22 - PIN 15
@@ -122,7 +134,7 @@ only use a standalone TigerVNC server (tigervnc-standalone-server, vncserver :1)
    - Steering servo signal: GPIO18 - PIN 12
    - Ground: GND - 6 (or another GND pin)
 
-8. Design decisions & Iteration
+9. Design decisions & Iteration
    This section document the reasoning behind the current configuration, what was tried, what failed, and why the final values were chosed. (see /src for the tested scripts referenced below).
 - **Motor direction mapping.** Initial GPIO-level testing (AIN1=1/AIN2=0) drove the robot backward relative to its physical chassis orientation. Rather than rewire the driver board, the fix was applied in software: the verified physical-forward mapping is (AIN1=0, AIN2=1, BIN1=1, BIN2=0). (All later test scripts and the autonomous program use this corrected mapping, any future script must match it or the robot will reverse its intended direction).
 - **Steering calibration.** Earlier pulse values (Right=700, center=1000, left=1300) pushed the servo close to it mechanical end stops, risking gear strain and inconsistent centering. The values were pulled in to (right=850, center=1000, left=1150), a deliberately softer range that keeps the servo within safe mechanical travel while still producing a usable steering angle.
