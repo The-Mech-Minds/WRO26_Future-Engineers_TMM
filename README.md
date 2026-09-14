@@ -22,15 +22,16 @@ Table of contents:
 14. Repository Structure.
 
 1. System Overview:
-USB Camera → Raspberry Pi 4B:
+USB Camera → Raspberry Pi 4B
 GPIO → Motor Driver → Motor A + Motor B
 GPIO18 → Steering Servo
+Pi USB port → Arduino Uno (power + serial data, same cable)
 power:
 - 30W power bank → Raspberry Pi
 - 7.4V battery → Motor driver VM/GND
 - 5-6V BEC/buck → Servo +/-
 - All grounds → common ground
-The robot uses a single forward-facing USB camera for obstacle detection, a dual-channel DC motor driver for propulsion, and a hobby servo for front-wheel (Ackerman-style) steering. The Raspberry Pi 4B runs the full control loop camera capture, color classification, and GPIO output onboard, with no external components.
+The robot uses a single forward-facing USB camera for obstacle detection, a dual-channel DC motor driver for propulsion, and a hobby servo for front-wheel (Ackerman-style) steering. The Raspberry Pi 4B runs the full control loop camera capture, color classification, and GPIO output. Steering is now handled by a dedicated Arduino Uno: the Pi sends steering commands to the Arduino over USB serial, and the Arduino generates the servo's PWM signal directly, instead of the Pi generating that signal itself.
 
 2. Hardware components:
    - Controller: Raspberry Pi 4B - Runs python, OpenCV, motor and servo control.
@@ -38,6 +39,7 @@ The robot uses a single forward-facing USB camera for obstacle detection, a dual
    - Motor driver: TB6612-type dual DC motor driver board - controls two DC motors.
    - Drive motors: 2 x DC motors - Robot propulsion.
    - Steering: 3-wire hobby servo - Front-wheel steering.
+   - Steering controller: Arduino Uno - Generates the servo's PWM signal directly (dedicated hardware timer), so steering timing no longer competes with the Pi's camera/OpenCV processing for CPU time. Connected to the Pi over USB serial.
    - Pi power: 30W USB power banks, 5V/3A output - Stable Raspberry Pi supply.
    - Motor power: 7.4V battery - Motor-driver VM supply.
    - Servo power: 5-6V regulated BEC/buck supply - Servo power without stressing the Pi rail.
@@ -48,6 +50,7 @@ The robot uses a single forward-facing USB camera for obstacle detection, a dual
      - Do not power a standard 5-6V servo directly from 7.4V unless that servo is explicitly rated for 2S/7.4V operation, use a regulated 5-6V BEC/buck converter instead.
      - The Pi, motor driver, and servo supply all share a common ground. Without this, GPIO signal levels become unreliable and the servo can behave erratically even when the logic is correct.
      - Always lift the driven wheels off the ground for first motor and steering test, before any floor testing.
+     - The Arduino Uno is powered over the same USB cable used for serial communication with the Pi. The servo's power (not signal) still comes from the 5-6V BEC/buck, not from the Arduino's own 5V pin, since the Arduino cannot supply enough current for a servo on its own.
 
 4. Wiring
    4.1 Power distribution
@@ -59,6 +62,7 @@ The robot uses a single forward-facing USB camera for obstacle detection, a dual
    - Servo GND → BEC/buck GND and Pi common GND.
 
    4.2 Motor driver
+   - (pin numbers could be different)
    - (AIN1) connect to (GPIO17) Pin 11
    - (AIN2) connect to (GPIO27) Pin 13
    - (BIN1) connect to (GPIO22) Pin 15
@@ -75,15 +79,16 @@ The robot uses a single forward-facing USB camera for obstacle detection, a dual
    -servo wires:
    - Orange/yellow/white:
      function: signal
-     connection: GPIO18, physical pin 12
+     connection: Arduino Uno pin D9 (PWM-capable) [no longer connected to the Pi directly]. 
    - Red:
      function: +5V power
      connection: 5-6V regulated BEC/buck
    - Brown/Black:
      function: Ground
-     connection: Common GND
+     connection: Common GND (Pi GND, Arduino GND, and BEC/buck GND all tied together).
 
-   4.4 Arduino Uno connection
+  **not finalize**
+  4.4 Arduino Uno connection
    - Arduino USB port → Raspberry Pi USB port (carries both power to the Arduino and the serial data link).
    - Arduino D9 → Servo signal wire.
    - Arduino GND → Common ground (same ground as Pi, motor driver, and BEC/buck).
@@ -116,7 +121,7 @@ The robot uses a single forward-facing USB camera for obstacle detection, a dual
 connect from a VNC viewer to tmm.local (or the IP from hostname -I).
 only use a standalone TigerVNC server (tigervnc-standalone-server, vncserver :1) if a separate virtual desktop session is specifically needed, it does not share the Pi's physical desktop.
 
-7. Software Environment
+6. Software Environment
    sudo apt update
    sudo apt install -y python3-lgpio python3-opencv python3-smbus2 i2c-tools
    verify:
@@ -125,7 +130,7 @@ only use a standalone TigerVNC server (tigervnc-standalone-server, vncserver :1)
    python3 -c "import smbus2; print('smbus2 OK')"
 (Raspberry Pi OS Trixie: don't rely on the older pigpio daemon package for this build, all GPIO code in this project uses lgpio)
 
-8. GPIO Pin assignment
+7. GPIO Pin assignment
    - Motor A IN1: GPIO17 - PIN 11
    - Motor A IN2: GPIO27 - PIN 13
    - Motor B IN1: GPIO22 - PIN 15
@@ -133,15 +138,18 @@ only use a standalone TigerVNC server (tigervnc-standalone-server, vncserver :1)
    - Motor driver STBY: GPIO24 - PIN 18
    - Steering servo signal: GPIO18 - PIN 12
    - Ground: GND - 6 (or another GND pin)
+   - GPIO18 is now free (previously the steering servo signal) - steering is handled by the Arduino Uno instead (section 4.4). Servo signal is now on Arduino pin D9, not a Pi GPIO pin.
 
 9. Design decisions & Iteration
-   This section document the reasoning behind the current configuration, what was tried, what failed, and why the final values were chosed. (see /src for the tested scripts referenced below).
+   [This section document the reasoning behind the current configuration, what was tried, what failed, and why the final values were chosed. (see /src for the tested scripts referenced below).]
 - **Motor direction mapping.** Initial GPIO-level testing (AIN1=1/AIN2=0) drove the robot backward relative to its physical chassis orientation. Rather than rewire the driver board, the fix was applied in software: the verified physical-forward mapping is (AIN1=0, AIN2=1, BIN1=1, BIN2=0). (All later test scripts and the autonomous program use this corrected mapping, any future script must match it or the robot will reverse its intended direction).
 - **Steering calibration.** Earlier pulse values (Right=700, center=1000, left=1300) pushed the servo close to it mechanical end stops, risking gear strain and inconsistent centering. The values were pulled in to (right=850, center=1000, left=1150), a deliberately softer range that keeps the servo within safe mechanical travel while still producing a usable steering angle.
 - **GPIO Library choice**. lgpio was chosen over the legacy pigpio daemon because Raspberry Pi OS Trixie does not reliably support the gipio background daemon this project would otherwise depend on. lgpio needs no daemon and matches the current OS.
 - **Servo idle state**. lgpio.tx_servo(h, servo, 0) stops pulse output, it does not command a 0° angle. Every test and the main program explicitly re-centers the servo (steer_center) before cutting the pulse, so the wheels don't default to an unpredictable angle when the program exits.
 - **Startup sequencing**. The autonomous program centers the steering servo and waits before enabling STBY and driving the motors, so the robot never lurches or steers hard immediately after power-on.
-  ##
+- **Steering moved from the Pi to a dedicated Arduino Uno**. Driving the servo directly from the Pi (via lgpio's software-generated PWM) caused visible jitter, and the servo would fail to hold a commanded steering angle, drifting back toward straight.
+  - The cause: lgpio generates servo pulses in software, sharing the same CPU that is simultaneously running the camera/OpenCV loop - when frame processing gets CPU-intensive, pulse timing to the servo becomes irregular, which the servo interprets as an unstable signal.
+  - The fix: steering was offloaded to an Arduino Uno, which has a dedicated hardware timer for generating PWM signals that is not affected by anything else the microcontroller is doing. The Pi now sends steering commands to the Arduino over USB serial instead of generating the servo pulse itself; the Arduino's onboard timer produces a stable, jitter-free signal regardless of camera-processing load. Motor control (which does not need microsecond-precision timing the way servo position does) remains on the Pi's GPIO as before.
 
   9. Autonomous Driving Strategy
       The current implimintation:
@@ -153,7 +161,7 @@ only use a standalone TigerVNC server (tigervnc-standalone-server, vncserver :1)
         - Green detected (area > threshold > red area) → steer left.
         - Red detected (area > threshold > green area) → steer right.
         - otherwise → steer center (straight).
-HSV ranges must be re-tuned under actual competition lighting before relying on this logic in a run.
+      6. The steering decision is sent to the Arduino Uno as a serial command; the Arduino converts it into the actual servo PWM signal. The Pi no longer generates the servo signal itself. HSV ranges must be re-tuned under actual competition lighting before relying on this logic in a run.
 - (src/color_steering.py) → decision logic only
 - (src/autonomous_main.py) → full integrated loop, for the tested implementations.
 
