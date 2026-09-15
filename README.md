@@ -206,6 +206,11 @@ Mechanical adjustments are made based on repeated track testing to improve relia
 
 The final vehicle uses **two mechanically coupled DC motors driving a common rear axle through gears, combined with servo-controlled front-wheel steering**.
 
+## 4. Electrical System & Circuit Diagram
+
+The electrical system separates the computing, motor, and servo power supplies to improve stability and reduce electrical noise. The Raspberry Pi communicates with the Arduino Uno through serial communication, while the Arduino controls the steering servo and motor driver.
+
+![Electrical Circuit Diagram](images/circuit-diagram.png)
 
   3. Power System & Safty
      - A 30W power bank is sufficient for the Pi 4B, provided it supplies 5V/3A.
