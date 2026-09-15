@@ -297,8 +297,6 @@ The image below shows the main image-processing regions used by the navigation a
 **Figure 4.4.2. Camera frame with the main Regions of Interest used for wall tracking, traffic-pillar detection, and lap-line detection.**
 
 ### 4.5 Camera Calibration
-### 4.5 Camera Calibration
-
 The computer-vision system was calibrated using images captured from the actual test field.
 
 Camera frames are captured in **BGR format** and converted to **HSV (Hue, Saturation, Value)** before colour detection. HSV was selected because it provides more reliable colour separation under changing lighting conditions.
@@ -347,7 +345,38 @@ The Raspberry Pi uses a separate USB power bank, while the Arduino and motor dri
 
 *The current values shown are approximate and may vary depending on load.*
 
-### 4.7 Electrical Safety and Failure Considerations
+### 4.6 Power Budget
+The robot uses separate power sources for the Raspberry Pi, Arduino, and drive motors. This helps the robot operate more reliably during movement.
+
+| Component           |     Voltage | Approx. Current | Power Source                       |
+| ------------------- | ----------: | --------------: | ---------------------------------- |
+| **Raspberry Pi 4B** |         5 V |        ~1–1.5 A | 30 W USB power bank                |
+| **USB Camera**      |         5 V |          ~0.2 A | Raspberry Pi USB                   |
+| **Arduino Uno**     | 7.4 V input |       ~50–80 mA | 2 × 3.7 V 18650 batteries          |
+| **Steering Servo**  |         5 V |      ~0.2–0.6 A | Arduino 5 V                        |
+| **Motor Driver**    |       7.4 V |               — | 2 × 3.7 V 18650 batteries          |
+| **DC Motor 1**      |       7.4 V |      ~0.3–0.8 A | Motor battery through motor driver |
+| **DC Motor 2**      |       7.4 V |      ~0.3–0.8 A | Motor battery through motor driver |
+
+The Raspberry Pi uses a separate USB power bank, while the Arduino and motor driver use separate 18650 battery packs. This helps prevent the drive motors from affecting the Raspberry Pi during operation.
+
+*The current values shown are approximate and may vary depending on load.*
+
+### 4.7 Failure Considerations
+
+| Problem Observed                       | Effect                                                              | Improvement Made                                                                                 |
+| -------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Servo jittering / stopping**         | Steering became unstable or unresponsive                            | Servo control was moved from Raspberry Pi to Arduino Uno                                         |
+| **Steering misalignment**              | Robot did not move straight when centred                            | Servo centre and steering linkage were recalibrated                                              |
+| **Poor turning performance**           | Robot continued pushing forward even when front wheels turned       | Reduced speed during turns and adjusted steering angle, wheel alignment, and weight distribution |
+| **Weight imbalance**                   | Left and right turns behaved differently                            | Batteries and heavy components were repositioned for better balance                              |
+| **Raspberry Pi controlling actuators** | Motor and servo control became inconsistent during image processing | Raspberry Pi was limited to vision/navigation; Arduino handled motor and servo control           |
+| **9 V battery power issue**            | Motors became weak and control was unstable                         | Replaced 9 V batteries with 3.7 V 18650 cells                                                    |
+| **Motor power drop**                   | Reduced speed and torque under load                                 | Used a 7.4 V pack made from 2 × 3.7 V 18650 cells                                                |
+| **Communication interruption**         | Motor or steering commands could stop                               | Serial command checking and watchdog safety were added    
+  
+  
+  
   3. Power System & Safty
      - A 30W power bank is sufficient for the Pi 4B, provided it supplies 5V/3A.
      - Never connect the 7.4V battery directly to a Raspberry Pi 5V pin. The power bank powers the Pi; the 7.4V battery is used only for the motor-driver VM input.
