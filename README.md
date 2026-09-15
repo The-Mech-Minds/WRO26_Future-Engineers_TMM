@@ -124,12 +124,12 @@ Our robot uses a **four-wheel automotive-style layout** with front-wheel steerin
 The drivetrain uses **two DC geared motors**, both connected through gears to the **same rear axle**. The rear wheels are therefore mechanically linked and are not controlled independently.
 
 ### Chassis and Drivetrain
-
+<img src="others/Chassis and Drivetrain.jpeg" width="500">
 
 Using two motors provides additional torque while keeping both rear wheels mechanically connected through the same axle.
 
 ### Steering Mechanism
-<img src="others/Chassis and Drivetrain.jpeg" width="500">
+
 The two front wheels are controlled by a single servo through a steering linkage.
 
 <img src="others/Steering Servo.jpeg" width="500"> 
@@ -217,6 +217,7 @@ The circuit also includes the separate power connections described in Section 4.
 | 7.4 V Battery 2 | Arduino Uno VIN / Barrel Input | Arduino power supply |
 | Motor Driver Outputs | DC Motor 1 & DC Motor 2 | Motor propulsion |
 | Common GND | Raspberry Pi, Arduino, Motor Driver & Batteries | Shared electrical reference |
+
 ### 4.4 Camera Placement
 
 A single **640×480 wide-angle USB camera** is mounted at the front of the robot.
