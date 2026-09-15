@@ -334,18 +334,19 @@ The Raspberry Pi uses a separate USB power bank, while the Arduino and motor dri
 
 *The current values shown are approximate and may vary depending on load.*
 
-### 4.7 Failure Considerations
+### 4.7 Electrical Failure Considerations
 
-| Problem Observed                       | Effect                                                              | Improvement Made                                                                                 |
-| -------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| **Servo jittering / stopping**         | Steering became unstable or unresponsive                            | Servo control was moved from Raspberry Pi to Arduino Uno                                         |
-| **Steering misalignment**              | Robot did not move straight when centred                            | Servo centre and steering linkage were recalibrated                                              |
-| **Poor turning performance**           | Robot continued pushing forward even when front wheels turned       | Reduced speed during turns and adjusted steering angle, wheel alignment, and weight distribution |
-| **Weight imbalance**                   | Left and right turns behaved differently                            | Batteries and heavy components were repositioned for better balance                              |
-| **Raspberry Pi controlling actuators** | Motor and servo control became inconsistent during image processing | Raspberry Pi was limited to vision/navigation; Arduino handled motor and servo control           |
-| **9 V battery power issue**            | Motors became weak and control was unstable                         | Replaced 9 V batteries with 3.7 V 18650 cells                                                    |
-| **Motor power drop**                   | Reduced speed and torque under load                                 | Used a 7.4 V pack made from 2 × 3.7 V 18650 cells                                                |
-| **Communication interruption**         | Motor or steering commands could stop                               | Serial command checking and watchdog safety were added    
+| Potential Failure                           | Effect                                   | Protection / Mitigation                                         |
+| ------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------- |
+| **Low motor-battery voltage**               | Reduced motor speed and torque           | Battery voltage checked before each run                         |
+| **Unstable 9 V battery supply**             | Weak motor and servo performance         | Replaced with 2 × 3.7 V 18650 battery packs                     |
+| **Servo jitter / unstable control**         | Steering becomes inaccurate              | Servo control moved from Raspberry Pi to Arduino Uno            |
+| **Loose power connection**                  | Sudden loss of power or control          | Connectors inspected before each run                            |
+| **Common-ground failure**                   | Unstable or incorrect control signals    | Ground connections checked before operation                     |
+| **Serial communication loss**               | Motor or steering commands stop updating | Arduino watchdog stops the vehicle safely                       |
+| **Raspberry Pi power interruption**         | Vision and navigation stop               | Raspberry Pi uses an independent 30 W USB power bank            |
+| **Motor electrical load affecting control** | Unstable actuator behaviour              | Separate power paths used for Raspberry Pi, Arduino, and motors |
+ 
   
 ## 5. Software Architecture & Autonomous Strategy
 
