@@ -85,7 +85,7 @@ The Arduino Uno is responsible for:
 
 ### System Data Flow Diagram
 
-<img src="others/System Data Flow Diagram.jpeg" width="120">
+<img src="others/System Data Flow Diagram.jpeg" width="1200">
 
 ### Control Flow
 
