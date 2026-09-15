@@ -21,39 +21,116 @@ Coach: Alex Savariyar.
 13. Troubleshooting.
 14. Repository Structure.
 
-## 1. System Overview:
-Our robot uses a hybrid control architecture in which the Raspberry Pi handles vision and autonomous decision-making, while the Arduino Uno manages real-time motion control. This separation improves processing efficiency and provides more stable motor and steering control.
-## Raspberry Pi – Vision and Decision-Making
-The Raspberry Pi acts as the main processing unit of the robot. It captures live video from the camera and runs the OpenCV-based autonomous navigation program.
-**Its main responsibilities include:**
-- Processing the camera image using selected Regions of Interest (ROI).
-- Detecting track boundaries and supporting wall-based navigation.
-- Identifying red and green traffic pillars and determining the required avoidance direction.
-- Detecting the blue lap-counting line and applying debounce logic to prevent repeated counting.
-- Tracking lap progress, where 12 validated blue-line detections correspond to three completed laps.
-- Managing the robot's operating states, including normal navigation, obstacle avoidance, lap completion, parking search, and parallel parking.
-- Sending the required steering and motor commands to the Arduino Uno.
-- Arduino Uno – Motion and Actuation Control
-The Arduino Uno acts as the low-level motion controller. It receives commands from the Raspberry Pi through serial communication and converts them into stable motor and steering outputs.
-The Raspberry Pi sends command packets in the following format: servoValue,motorValue
-**The Arduino is responsible for:**
-- Reading and validating incoming serial commands.
-- Controlling the steering servo position.
-- Applying the required steering-direction inversion based on the physical steering mechanism.
-- Controlling the drive motor speed and direction.
-- Maintaining consistent real-time actuator control independently of the Raspberry Pi's computer-vision workload.
-- Applying safety routines such as a communication watchdog to stop or place the robot in a safe state if valid commands are no longer received.
+## 1. System Overview
 
-2. Hardware components:
-   - Controller: Raspberry Pi 4B - Runs python, OpenCV, motor and servo control.
-   - Camera: USB 640x480, 30 fps, ~130° wide angle - Obstacle/wall/color detection.
-   - Motor driver: TB6612-type dual DC motor driver board - controls two DC motors.
-   - Drive motors: 2 x DC motors - Robot propulsion.
-   - Steering: 3-wire hobby servo - Front-wheel steering.
-   - Steering controller: Arduino Uno - Generates the servo's PWM signal directly (dedicated hardware timer), so steering timing no longer competes with the Pi's camera/OpenCV processing for CPU time. Connected to the Pi over USB serial.
-   - Pi power: 30W USB power banks, 5V/3A output - Stable Raspberry Pi supply.
-   - Motor power: 7.4V battery - Motor-driver VM supply.
-   - Servo power: 5-6V regulated BEC/buck supply - Servo power without stressing the Pi rail.
+Our robot uses a **hybrid control architecture** in which the **Raspberry Pi 4B** performs computer vision, autonomous navigation, and decision-making, while the **Arduino Uno** handles real-time steering and motor control.
+
+This separation allows the Raspberry Pi to focus on computationally intensive vision processing while the Arduino provides stable and responsive control of the robot's actuators.
+
+### Raspberry Pi 4B – Vision and Decision-Making
+
+The Raspberry Pi 4B acts as the main processing unit of the robot. A 640×480 wide-angle USB camera continuously provides images of the track. These frames are processed using an OpenCV-based Python program.
+
+The Raspberry Pi is responsible for:
+
+* Capturing and processing live camera frames.
+* Processing selected **Regions of Interest (ROI)** for navigation.
+* Detecting track boundaries for wall-based navigation.
+* Detecting **red and green traffic pillars** and determining the appropriate avoidance direction.
+* Detecting the **blue lap-counting line**.
+* Applying debounce logic to prevent repeated lap counts.
+* Tracking lap progress, where **12 validated blue-line detections represent three completed laps**.
+* Managing navigation states such as normal driving, obstacle avoidance, lap completion, parking search, and parallel parking.
+* Calculating the required steering position and motor speed.
+* Sending steering and motor commands to the Arduino Uno through serial communication.
+
+### Arduino Uno – Motion Control
+
+The Arduino Uno acts as the robot's low-level motion controller.
+
+It receives steering and motor commands from the Raspberry Pi through serial communication and converts them into stable signals for the steering servo and drive motor.
+
+The communication packet follows the format:
+
+`servoValue,motorValue`
+
+For example:
+
+`1050,120`
+
+The first value represents the steering command and the second value represents the motor command.
+
+The Arduino Uno is responsible for:
+
+* Receiving serial commands from the Raspberry Pi.
+* Validating the received command values.
+* Generating the required PWM signal for the steering servo.
+* Applying steering-direction correction according to the mechanical steering arrangement.
+* Controlling the motor driver.
+* Controlling the direction and speed of the DC drive motor.
+* Maintaining stable actuator control independently of the Raspberry Pi's computer-vision workload.
+* Applying a communication watchdog to stop the robot if valid commands are not received within the expected time.
+
+### System Components
+
+| Subsystem             | Main Component                     | Function                                                                               |
+| --------------------- | ---------------------------------- | -------------------------------------------------------------------------------------- |
+| **Perception**        | 640×480 wide-angle USB camera      | Captures the track, traffic pillars, lap-counting line, and parking markers            |
+| **Main Processing**   | Raspberry Pi 4B                    | Performs computer vision, autonomous navigation, decision-making, and state management |
+| **Motion Controller** | Arduino Uno                        | Receives motion commands from the Raspberry Pi and controls the actuators              |
+| **Steering**          | Servo motor                        | Controls the steering angle of the front wheels                                        |
+| **Motor Control**     | Motor driver                       | Controls the direction and speed of the DC drive motor                                 |
+| **Propulsion**        | DC motor and mechanical drivetrain | Transfers motor power to the drive wheels                                              |
+| **Power System**      | Separate regulated power supplies  | Provides stable power to the Raspberry Pi, Arduino, servo, and drive system            |
+
+### System Data Flow Diagram
+
+```mermaid
+flowchart LR
+    A["USB Camera<br>640x480"] -->|Video Frames| B["Raspberry Pi 4B<br>Computer Vision<br>Navigation & Decision-Making"]
+
+    B -->|Serial Communication<br>servoValue, motorValue| C["Arduino Uno<br>Motion Controller"]
+
+    C -->|PWM Steering Signal| D["Steering Servo"]
+
+    C -->|Speed & Direction Signal| E["Motor Driver"]
+
+    E --> F["DC Motor"]
+
+    F --> G["Mechanical Drivetrain<br>Drive Wheels"]
+```
+
+### Control Flow
+
+The overall control sequence of the robot is:
+
+**Camera → Raspberry Pi → Arduino Uno → Steering Servo / Motor Driver → DC Motor → Drive Wheels**
+
+1. The **USB camera** captures the track environment.
+2. The **Raspberry Pi 4B** processes the camera frames using OpenCV.
+3. The Raspberry Pi determines the required steering position and motor speed.
+4. The steering and motor values are transmitted to the **Arduino Uno** through serial communication.
+5. The Arduino generates the required PWM signal for the **steering servo**.
+6. The Arduino sends speed and direction signals to the **motor driver**.
+7. The motor driver controls the **DC drive motor**.
+8. The mechanical drivetrain transfers motor rotation to the drive wheels.
+
+## 2. Hardware Components
+
+The robot uses the following main electronic, mechanical, and power components.
+
+|   No. | Component                         | Image                                              | Specification / Function                                                                                                                                                                                                                                                     |
+| ----: | --------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1** | **Controller & Vision Processor** | <img src="images/raspberry-pi-4b.jpg" width="120"> | **Raspberry Pi 4B** — Runs Python and OpenCV computer-vision pipelines. Handles Region of Interest (ROI) wall tracking, red/green traffic-pillar detection, edge-debounced blue-line lap counting, autonomous navigation, and the parallel-parking state machine.            |
+| **2** | **Camera**                        | <img src="images/usb-camera.jpg" width="120">      | **USB Camera — 640×480, 30 fps, ~130° FOV** — Provides real-time visual input for track observation, wall detection, traffic-pillar detection, lap-line detection, and parking-marker recognition.                                                                           |
+| **3** | **Motor Driver**                  | <img src="images/motor-driver.jpg" width="120">    | **TB6612-type Dual DC Motor Driver** — Interfaces between the Arduino Uno, motor power supply, and DC motors. Controls motor direction and speed.                                                                                                                            |
+| **4** | **Drive Motors**                  | <img src="images/dc-motors.jpg" width="120">       | **2 × DC Motors** — Provide propulsion to the robot through the mechanical drivetrain.                                                                                                                                                                                       |
+| **5** | **Steering Mechanism**            | <img src="images/steering-servo.jpg" width="120">  | **3-Wire Hobby Servo** — Controls the front-wheel steering mechanism according to steering commands received from the Arduino Uno.                                                                                                                                           |
+| **6** | **Steering & Motor Coprocessor**  | <img src="images/arduino-uno.jpg" width="120">     | **Arduino Uno** — Receives continuous CSV command packets (`servoVal,motorVal\n`) from the Raspberry Pi through hardware UART (`/dev/serial0`). It generates the servo PWM signal and controls the motor driver, offloading low-level actuator timing from the Raspberry Pi. |
+| **7** | **Raspberry Pi Power Supply**     | <img src="images/power-bank.jpg" width="120">      | **30 W USB Power Bank — 5 V / 3 A output** — Provides a stable independent power supply for the Raspberry Pi.                                                                                                                                                                |
+| **8** | **Motor Power Supply**            | <img src="images/7.4v-battery.jpg" width="120">    | **7.4 V Battery Pack** — Supplies the motor driver's VM power rail for robot propulsion.                                                                                                                                                                                     |
+| **9** | **Servo Power Supply**            | <img src="images/bec-buck.jpg" width="120">        | **5–6 V Regulated BEC / Buck Converter** — Supplies stable power to the steering servo without drawing high current from the Raspberry Pi or Arduino power rails.                                                                                                            |
+
 
   3. Power System & Safty
      - A 30W power bank is sufficient for the Pi 4B, provided it supplies 5V/3A.
