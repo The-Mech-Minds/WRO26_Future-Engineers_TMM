@@ -328,22 +328,6 @@ The following images show the main stages of the colour-detection process:
 
 The final HSV ranges and contour thresholds were selected through repeated track testing to achieve stable detection while reducing false positives.
 
-### 4.6 Power Budget
-The robot uses separate power sources for the Raspberry Pi, Arduino, and drive motors. This helps the robot operate more reliably during movement.
-
-| Component           |     Voltage | Approx. Current | Power Source                       |
-| ------------------- | ----------: | --------------: | ---------------------------------- |
-| **Raspberry Pi 4B** |         5 V |        ~1–1.5 A | 30 W USB power bank                |
-| **USB Camera**      |         5 V |          ~0.2 A | Raspberry Pi USB                   |
-| **Arduino Uno**     | 7.4 V input |       ~50–80 mA | 2 × 3.7 V 18650 batteries          |
-| **Steering Servo**  |         5 V |      ~0.2–0.6 A | Arduino 5 V                        |
-| **Motor Driver**    |       7.4 V |               — | 2 × 3.7 V 18650 batteries          |
-| **DC Motor 1**      |       7.4 V |      ~0.3–0.8 A | Motor battery through motor driver |
-| **DC Motor 2**      |       7.4 V |      ~0.3–0.8 A | Motor battery through motor driver |
-
-The Raspberry Pi uses a separate USB power bank, while the Arduino and motor driver use separate 18650 battery packs. This helps prevent the drive motors from affecting the Raspberry Pi during operation.
-
-*The current values shown are approximate and may vary depending on load.*
 
 ### 4.6 Power Budget
 The robot uses separate power sources for the Raspberry Pi, Arduino, and drive motors. This helps the robot operate more reliably during movement.
@@ -375,7 +359,178 @@ The Raspberry Pi uses a separate USB power bank, while the Arduino and motor dri
 | **Motor power drop**                   | Reduced speed and torque under load                                 | Used a 7.4 V pack made from 2 × 3.7 V 18650 cells                                                |
 | **Communication interruption**         | Motor or steering commands could stop                               | Serial command checking and watchdog safety were added    
   
-  
+## 5. Software Architecture & Autonomous Strategy
+
+The autonomous software is divided between the **Raspberry Pi 4B** and the **Arduino Uno**. The Raspberry Pi handles computer vision, navigation, obstacle detection, lap counting, and parking decisions, while the Arduino Uno controls the steering servo and drive motor in real time.
+
+### 5.1 Software Overview
+
+The Raspberry Pi processes the camera image using OpenCV and calculates the required steering and motor commands. These commands are sent to the Arduino Uno through serial communication.
+
+```mermaid
+flowchart LR
+    A["USB Camera"] --> B["Raspberry Pi 4B"]
+    B --> C["OpenCV Processing"]
+    C --> D["Navigation & Decision Logic"]
+    D --> E["Steering + Motor Commands"]
+    E -->|"UART"| F["Arduino Uno"]
+    F --> G["Steering Servo"]
+    F --> H["Motor Driver"]
+    H --> I["Drive Motor"]
+```
+
+**Figure 5.1. Software and control architecture.**
+
+### 5.2 Main State Machine
+
+The robot operates mainly in two phases: **Racing** and **Parking**. During racing, it performs wall navigation, traffic-pillar avoidance, and lap counting. After completing three laps, it automatically enters the parking phase.
+
+```mermaid
+flowchart TD
+    A["Start"] --> B["Initialize Camera & UART"]
+    B --> C["Racing Phase"]
+
+    C --> D["Process Camera"]
+    D --> E{"Traffic Pillar?"}
+
+    E -->|Yes| F["Obstacle Avoidance"]
+    E -->|No| G["Wall Navigation"]
+
+    F --> H["Steering & Motor Command"]
+    G --> H
+
+    H --> I["Check Blue Line"]
+    I --> J{"12 Lines Detected?"}
+
+    J -->|No| D
+    J -->|Yes| K["Parking Phase"]
+
+    K --> L["Parallel Parking"]
+    L --> M["Stop"]
+```
+
+**Figure 5.2. Main autonomous state machine.**
+
+### 5.3 Camera Processing Pipeline
+
+The USB camera captures frames at **640×480 resolution**. The software selects the required Region of Interest (ROI), converts the image to HSV, creates colour masks, and identifies useful objects from detected contours.
+
+```mermaid
+flowchart LR
+    A["Camera Frame"] --> B["Select ROI"]
+    B --> C["BGR to HSV"]
+    C --> D["Colour Masks"]
+    D --> E["Noise Filtering"]
+    E --> F["Contour Detection"]
+    F --> G["Area Filtering"]
+    G --> H["Object Detection"]
+    H --> I["Navigation Decision"]
+```
+
+**Figure 5.3. Camera-processing pipeline.**
+
+### 5.4 Track / Wall Navigation
+
+The lower region of the camera image is used to detect the left and right track boundaries. The robot adjusts its steering to remain safely between the walls.
+
+If one wall temporarily disappears, the system uses the last valid turning direction for a short period to maintain stable movement.
+
+### 5.5 Red and Green Traffic Pillar Detection
+
+Red and green traffic pillars are detected using HSV colour masks and contour filtering.
+
+* **Green pillar:** The robot steers left to avoid it.
+* **Red pillar:** The robot steers right to avoid it.
+* The largest valid contour is treated as the closest and most important obstacle.
+
+### 5.6 Steering Decision
+
+Steering commands are calculated from the detected walls and traffic pillars.
+
+The Raspberry Pi selects the required steering position and sends the value to the Arduino Uno. Motor speed is also reduced during turns or obstacle avoidance to improve stability.
+
+Typical steering reference values are:
+
+| Direction  | Servo Value |
+| ---------- | ----------: |
+| **Left**   |     1750 µs |
+| **Centre** |     1880 µs |
+| **Right**  |     2150 µs |
+
+### 5.7 Blue-Line Lap Counting
+
+The blue reference line is detected using an HSV colour mask. Debounce and cooldown logic prevent the same physical line from being counted more than once.
+
+Every four valid blue-line detections represent one lap. After **12 detections**, the robot completes three laps and switches to the parking phase.
+
+```mermaid
+flowchart TD
+    A["Process Blue Mask"] --> B{"Blue Line Visible?"}
+
+    B -->|No| C["Continue Navigation"]
+    B -->|Yes| D{"New Detection?"}
+
+    D -->|No| C
+    D -->|Yes| E{"Cooldown Complete?"}
+
+    E -->|No| C
+    E -->|Yes| F["Increase Line Count"]
+
+    F --> G{"Count = 12?"}
+
+    G -->|No| C
+    G -->|Yes| H["Start Parking"]
+```
+
+**Figure 5.4. Blue-line lap-counting logic.**
+
+### 5.8 Serial Communication
+
+The Raspberry Pi communicates with the Arduino Uno through hardware UART using `/dev/serial0`.
+
+Commands are transmitted in a simple CSV format:
+
+```text
+servoVal,motorVal
+```
+
+Example:
+
+```text
+1880,60
+```
+
+The Arduino reads the values and immediately applies the required steering and motor output.
+
+### 5.9 Parallel Parking
+
+After the 12th blue-line detection, the robot automatically starts the parking sequence.
+
+The sequence consists of forward positioning, reversing, steering into the parking area, counter-steering for alignment, and stopping inside the parking bay.
+
+```mermaid
+flowchart LR
+    A["12th Blue Line"] --> B["Forward Positioning"]
+    B --> C["Straight Reverse"]
+    C --> D["Reverse + Steer"]
+    D --> E["Counter-Steer"]
+    E --> F["Align Vehicle"]
+    F --> G["Stop"]
+```
+
+**Figure 5.5. Automated parallel-parking sequence.**
+
+### 5.10 Safety Watchdog / Fail-Safe
+
+The Arduino continuously checks whether valid commands are being received from the Raspberry Pi.
+
+If communication is lost for approximately **1000 ms**, the Arduino automatically:
+
+* Stops the drive motor.
+* Returns the steering servo to its centre position.
+
+This prevents uncontrolled movement if the Raspberry Pi freezes, disconnects, or stops sending commands.
+
   
   3. Power System & Safty
      - A 30W power bank is sufficient for the Pi 4B, provided it supplies 5V/3A.
