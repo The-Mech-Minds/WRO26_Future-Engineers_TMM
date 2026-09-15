@@ -1,5 +1,6 @@
 **WRO-FUTURE-ENGINEERS-2026_THE MECH MINDS**
-   Welcome to the official technical repository for Team TMM's autonomous self-driving vehicle developed for the WRO Future Engineers category. This codebase powers our dual-microarchitecture robot engineered for precision wall-keeping, dynamic obstacle avoidance, robust lap counting, and automated parallel parking.
+
+Welcome to the official technical repository for Team TMM's autonomous self-driving vehicle developed for the WRO Future Engineers category. This codebase powers our dual-microarchitecture robot engineered for precision wall-keeping, dynamic obstacle avoidance, robust lap counting, and automated parallel parking.
 
 ## Team members: 
 Ahmed Suleiman, Ismail Nassor, & Hajer Al Salmani. 
