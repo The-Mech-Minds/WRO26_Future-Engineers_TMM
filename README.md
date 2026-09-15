@@ -272,6 +272,43 @@ The circuit also includes the separate power connections described in Section 4.
 | Motor Driver Outputs | DC Motor 1 & DC Motor 2 | Motor propulsion |
 | Common GND | Raspberry Pi, Arduino, Motor Driver & Batteries | Shared electrical reference |
 ### 4.4 Camera Placement
+
+A single **640×480 wide-angle USB camera** is mounted at the front of the robot.
+
+The camera position was selected to provide clear visibility of:
+
+- Track boundaries ahead of the vehicle.
+- Red and green traffic pillars.
+- Blue lap-reference lines.
+- The parking area and parking markers.
+
+The mounting height and viewing angle were adjusted through track testing. The lower part of the image is used mainly for nearby track and steering information, while the upper part provides sufficient look-ahead distance for navigation and obstacle detection.
+
+| Parameter | Camera Setup |
+|---|---|
+| **Camera Resolution** | 640×480 |
+| **Frame Rate** | 30 fps |
+| **Camera Height** | 8 CM from ground |
+| **Camera Angle** | 90 Degree against ground |
+| **Viewing Direction** | Forward-facing |
+| **Approximate Field of View** | ~130° |
+| **Mounting Position** | Front section of the robot |
+
+The final camera position was selected to balance **near-field track detection** with **forward visibility**, improving steering decisions and early detection of traffic pillars.
+#### Camera View
+
+The following image shows the forward view captured by the USB camera during track testing.
+
+![Camera View](docs/images/camera_view.jpg)
+
+**Figure 4.4.1. Forward camera view used for autonomous navigation.**
+
+The image below shows the main image-processing regions used by the navigation algorithm.
+
+![Camera ROI View](docs/images/camera_roi_view.jpg)
+
+**Figure 4.4.2. Camera frame with the main Regions of Interest used for wall tracking, traffic-pillar detection, and lap-line detection.**
+
 ### 4.5 Camera Calibration
 ### 4.6 Power Budget
 ### 4.7 Electrical Safety and Failure Considerations
