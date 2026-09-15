@@ -511,6 +511,32 @@ If communication is lost for approximately **1000 ms**, the Arduino automaticall
 
 This prevents uncontrolled movement if the Raspberry Pi freezes, disconnects, or stops sending commands.
 
+## 6. Engineering Decisions & Iterations
+
+The robot was improved through repeated mechanical, electrical, and software testing. The main engineering changes made during development are summarized below.
+
+| Initial Issue                                                                     | Engineering Change                                                | Result                                             |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------- |
+| Servo control became unstable while the Raspberry Pi was processing camera frames | Steering and motor control were moved to the Arduino Uno          | More stable actuator control                       |
+| Robot did not travel straight consistently                                        | Servo centre and steering limits were recalibrated                | Improved straight-line movement and turning        |
+| Robot overshot corners at higher speed                                            | Motor speed was reduced during sharp turns and obstacle avoidance | Better cornering stability                         |
+| Left and right turns behaved differently                                          | Batteries and heavy components were repositioned                  | Improved weight balance                            |
+| 9 V batteries provided weak motor performance                                     | Replaced with 7.4 V battery packs using 18650 cells               | Improved torque and reliability                    |
+| Blue line remained visible across multiple frames                                 | Added debounce and cooldown logic                                 | Prevented duplicate lap counts                     |
+| Loss of serial commands could leave an old actuator command active                | Added an Arduino communication watchdog                           | Robot stops safely if communication is interrupted |
+
+### Key Architectural Decision
+
+One of the most important changes was separating the robot's high-level and low-level processing.
+
+The **Raspberry Pi 4B** now concentrates on computer vision, navigation, lap counting, and parking decisions, while the **Arduino Uno** manages steering and motor control.
+
+This architecture was retained because it provided more stable actuator control while allowing the Raspberry Pi to concentrate on computationally intensive OpenCV processing.
+
+### Development Approach
+
+Each major modification was tested on the track before being incorporated into the final robot. Changes were retained only when they improved reliability, steering stability, navigation accuracy, or overall consistency.
+
   
   3. Power System & Safty
      - A 30W power bank is sufficient for the Pi 4B, provided it supplies 5V/3A.
