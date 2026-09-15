@@ -1,160 +1,230 @@
-Integrated autonomous program: both motors drive forward, the camera
-detects red/green obstacles, and the servo steers accordingly. This is a
-reactive baseline -- it does not yet implement full wall tracking, lap
-counting, or corner-state logic.
- 
-Startup sequence:
-    1. Center the steering servo.
-    2. Wait for the competition Start button to be pressed (see
-       wait_for_start_button() below -- required by WRO general rules
-       9.10-9.14: the vehicle must power on, sit idle, and only begin
-       moving on a physical button press timed to the judge's "Go").
-    3. Enable the motor driver (STBY) and begin the drive + detection loop.
- 
-TODO (team): wait_for_start_button() is a placeholder. Wire an actual GPIO
-push button (or whichever button is used) and set START_BUTTON_PIN below
-before relying on this at competition -- right now it is NOT yet reading a
-real button.
- 
-Run:
-    python3 autonomous_main.py
-Press 'q' in the preview window to quit (requires a display / VNC session).
-"""
- 
-import os
-os.environ["OPENCV_VIDEOIO_PRIORITY_BACKEND"] = "0"
- 
 import cv2
 import numpy as np
-import lgpio
+import serial
 import time
- 
-AIN1, AIN2 = 17, 27
-BIN1, BIN2 = 22, 23
-STBY = 24
-SERVO = 18
- 
-# TODO (team): set this to the actual GPIO pin wired to the start button.
-START_BUTTON_PIN = None
- 
-STEER_RIGHT = 850
-STEER_CENTER = 1000
-STEER_LEFT = 1150
- 
-RED1_LO = np.array([0, 120, 70], np.uint8)
-RED1_HI = np.array([10, 255, 255], np.uint8)
-RED2_LO = np.array([170, 120, 70], np.uint8)
-RED2_HI = np.array([180, 255, 255], np.uint8)
-GREEN_LO = np.array([35, 80, 80], np.uint8)
-GREEN_HI = np.array([85, 255, 255], np.uint8)
-MIN_AREA = 500
- 
- 
-def setup_gpio():
-    h = lgpio.gpiochip_open(0)
-    for pin in [AIN1, AIN2, BIN1, BIN2, STBY, SERVO]:
-        lgpio.gpio_claim_output(h, pin)
-    if START_BUTTON_PIN is not None:
-        lgpio.gpio_claim_input(h, START_BUTTON_PIN)
-    return h
- 
- 
-def forward(h):
-    lgpio.gpio_write(h, AIN1, 0)
-    lgpio.gpio_write(h, AIN2, 1)
-    lgpio.gpio_write(h, BIN1, 1)
-    lgpio.gpio_write(h, BIN2, 0)
- 
- 
-def stop(h):
-    for pin in [AIN1, AIN2, BIN1, BIN2]:
-        lgpio.gpio_write(h, pin, 0)
- 
- 
-def wait_for_start_button(h):
-    """
-    Block until the competition Start button is pressed (WRO rule 9.11:
-    the vehicle must sit in a waiting state after power-on until this
-    press occurs). PLACEHOLDER until START_BUTTON_PIN is wired -- currently
-    falls back to a short fixed delay so the script is still runnable for
-    bench testing.
-    """
-    if START_BUTTON_PIN is None:
-        print("WARNING: no start button wired yet -- using fallback delay only.")
-        time.sleep(3)
-        return
- 
-    print("Waiting for start button press...")
-    while lgpio.gpio_read(h, START_BUTTON_PIN) == 0:
-        time.sleep(0.05)
-    print("Start button pressed -- beginning run.")
- 
- 
-def classify(frame):
-    roi = frame[240:480, 0:640]
-    hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
- 
-    red_mask = cv2.bitwise_or(
-        cv2.inRange(hsv, RED1_LO, RED1_HI),
-        cv2.inRange(hsv, RED2_LO, RED2_HI),
-    )
-    green_mask = cv2.inRange(hsv, GREEN_LO, GREEN_HI)
- 
-    red_contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    green_contours, _ = cv2.findContours(green_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
- 
-    red_area = max([cv2.contourArea(c) for c in red_contours], default=0)
-    green_area = max([cv2.contourArea(c) for c in green_contours], default=0)
-    return red_area, green_area
- 
- 
-def main():
-    h = setup_gpio()
-    cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
- 
-    try:
-        lgpio.tx_servo(h, SERVO, STEER_CENTER)
-        time.sleep(2)
- 
-        wait_for_start_button(h)
- 
-        lgpio.gpio_write(h, STBY, 1)
-        forward(h)
- 
-        while True:
-            ret, frame = cap.read()
-            if not ret:
+
+uart = serial.Serial('/dev/serial0', 9600, timeout=0.1)
+time.sleep(2)
+
+cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+if not cap.isOpened():
+    uart.close()
+    exit()
+
+kernel = np.ones((5, 5), np.uint8)
+
+blue_line_count = 0
+lap_count = 0
+last_blue_time = 0
+BLUE_COOLDOWN = 1.5
+line_was_visible = False
+
+STEER_LEFT = 1750
+STEER_CENTER = 1880
+STEER_RIGHT = 2150
+
+last_valid_turn = "CENTER"
+turn_memory_time = 0
+TURN_MEMORY_DURATION = 0.4
+
+red_lower1 = np.array([0, 160, 100], np.uint8)
+red_upper1 = np.array([6, 255, 255], np.uint8)
+red_lower2 = np.array([172, 160, 100], np.uint8)
+red_upper2 = np.array([180, 255, 255], np.uint8)
+
+green_lower = np.array([35, 100, 100], np.uint8)
+green_upper = np.array([85, 255, 255], np.uint8)
+
+blue_lower = np.array([100, 150, 50], np.uint8)
+blue_upper = np.array([140, 255, 255], np.uint8)
+
+WALL_THRESHOLD = 120
+MIN_CONTOUR_AREA = 400
+OBSTACLE_MIN_AREA = 700
+
+parking_state = 0
+parking_timer = 0
+
+try:
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        h_frame, w_frame, _ = frame.shape
+        roi_top = int(h_frame * 0.50)
+        margin = 0
+
+        roi = frame[roi_top:h_frame, margin:w_frame - margin]
+        roi_h, roi_w, _ = roi.shape
+        hsv_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+
+        blue_mask = cv2.inRange(hsv_roi, blue_lower, blue_upper)
+        blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, kernel)
+        contours_blue, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        line_currently_visible = False
+        for cnt in contours_blue:
+            if cv2.contourArea(cnt) > 800:
+                line_currently_visible = True
                 break
- 
-            red_area, green_area = classify(frame)
- 
-            if green_area > MIN_AREA and green_area > red_area:
-                lgpio.tx_servo(h, SERVO, STEER_LEFT)
-                decision = "GREEN -> LEFT"
-            elif red_area > MIN_AREA and red_area > green_area:
-                lgpio.tx_servo(h, SERVO, STEER_RIGHT)
-                decision = "RED -> RIGHT"
+
+        current_time = time.time()
+
+        if line_currently_visible and not line_was_visible and (current_time - last_blue_time > BLUE_COOLDOWN):
+            blue_line_count += 1
+            last_blue_time = current_time
+            lap_count = blue_line_count // 4
+
+            if blue_line_count >= 12 and parking_state == 0:
+                parking_state = 1
+                parking_timer = current_time
+
+        line_was_visible = line_currently_visible
+
+        if parking_state > 0:
+            elapsed = current_time - parking_timer
+
+            if parking_state == 1:
+                servo_val = STEER_CENTER
+                motor_val = 40
+                if elapsed > 1.2:
+                    parking_state = 2
+                    parking_timer = current_time
+
+            elif parking_state == 2:
+                servo_val = STEER_CENTER
+                motor_val = -40
+                if elapsed > 0.8:
+                    parking_state = 3
+                    parking_timer = current_time
+
+            elif parking_state == 3:
+                servo_val = STEER_LEFT
+                motor_val = -35
+                if elapsed > 1.0:
+                    parking_state = 4
+                    parking_timer = current_time
+
+            elif parking_state == 4:
+                servo_val = STEER_RIGHT
+                motor_val = -30
+                if elapsed > 0.8:
+                    parking_state = 5
+
+            elif parking_state == 5:
+                servo_val = STEER_CENTER
+                motor_val = 0
+                command_str = f"{servo_val},{motor_val}\n"
+                uart.write(command_str.encode('utf-8'))
+                break
+
+        else:
+            mask_red1 = cv2.inRange(hsv_roi, red_lower1, red_upper1)
+            mask_red2 = cv2.inRange(hsv_roi, red_lower2, red_upper2)
+            red_mask = cv2.bitwise_or(mask_red1, mask_red2)
+            red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel)
+
+            green_mask = cv2.inRange(hsv_roi, green_lower, green_upper)
+            green_mask = cv2.morphologyEx(green_mask, cv2.MORPH_OPEN, kernel)
+
+            contours_red, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours_green, _ = cv2.findContours(green_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            largest_red_area = max([cv2.contourArea(c) for c in contours_red], default=0)
+            largest_green_area = max([cv2.contourArea(c) for c in contours_green], default=0)
+
+            gray_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+            _, thresh = cv2.threshold(gray_roi, WALL_THRESHOLD, 255, cv2.THRESH_BINARY_INV)
+            thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+
+            contours_walls, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            left_wall_max_x = 0
+            right_wall_min_x = roi_w
+            left_detected = False
+            right_detected = False
+            front_wall_detected = False
+            mid_x = roi_w // 2
+
+            for cnt in contours_walls:
+                area = cv2.contourArea(cnt)
+                if area > MIN_CONTOUR_AREA:
+                    x, y, w, th = cv2.boundingRect(cnt)
+                    cx = x + w // 2
+
+                    if y < 5 and w > (roi_w * 0.75) and area > 2000:
+                        front_wall_detected = True
+
+                    if cx < mid_x:
+                        right_edge = x + w
+                        if right_edge > left_wall_max_x:
+                            left_wall_max_x = right_edge
+                            left_detected = True
+                    else:
+                        left_edge = x
+                        if left_edge < right_wall_min_x:
+                            right_wall_min_x = left_edge
+                            right_detected = True
+
+            servo_val = STEER_CENTER
+            motor_val = 0
+
+            if largest_green_area > OBSTACLE_MIN_AREA and largest_green_area > largest_red_area:
+                servo_val = STEER_LEFT
+                motor_val = 65
+                last_valid_turn = "LEFT"
+                turn_memory_time = current_time
+            elif largest_red_area > OBSTACLE_MIN_AREA and largest_red_area > largest_green_area:
+                servo_val = STEER_RIGHT
+                motor_val = 65
+                last_valid_turn = "RIGHT"
+                turn_memory_time = current_time
+            elif front_wall_detected:
+                servo_val = STEER_RIGHT
+                motor_val = 60
+                last_valid_turn = "RIGHT"
+                turn_memory_time = current_time
+            elif left_detected and right_detected:
+                calculated_center = (left_wall_max_x + right_wall_min_x) // 2
+                error = calculated_center - mid_x
+                proportional_steer = STEER_CENTER + int(error * 1.2)
+                servo_val = max(STEER_LEFT, min(STEER_RIGHT, proportional_steer))
+                motor_val = 80
+                last_valid_turn = "CENTER"
+            elif left_detected and not right_detected:
+                servo_val = STEER_RIGHT
+                motor_val = 70
+                last_valid_turn = "RIGHT"
+                turn_memory_time = current_time
+            elif right_detected and not left_detected:
+                servo_val = STEER_LEFT
+                motor_val = 70
+                last_valid_turn = "LEFT"
+                turn_memory_time = current_time
             else:
-                lgpio.tx_servo(h, SERVO, STEER_CENTER)
-                decision = "STRAIGHT"
- 
-            print(decision)
-            cv2.putText(frame, decision, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
-            cv2.imshow("WRO Autonomous", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-    finally:
-        stop(h)
-        lgpio.tx_servo(h, SERVO, STEER_CENTER)
-        time.sleep(0.5)
-        lgpio.tx_servo(h, SERVO, 0)
-        lgpio.gpio_write(h, STBY, 0)
-        lgpio.gpiochip_close(h)
-        cap.release()
-        cv2.destroyAllWindows()
- 
- 
-if __name__ == "__main__":
-    main()
+                if current_time - turn_memory_time < TURN_MEMORY_DURATION:
+                    if last_valid_turn == "RIGHT":
+                        servo_val = STEER_RIGHT
+                        motor_val = 70
+                    elif last_valid_turn == "LEFT":
+                        servo_val = STEER_LEFT
+                        motor_val = 70
+                    else:
+                        servo_val = STEER_CENTER
+                        motor_val = 75
+                else:
+                    servo_val = STEER_CENTER
+                    motor_val = 75
+
+        command_str = f"{servo_val},{motor_val}\n"
+        uart.write(command_str.encode('utf-8'))
+
+finally:
+    uart.write(f"{STEER_CENTER},0\n".encode('utf-8'))
+    cap.release()
+    cv2.destroyAllWindows()
+    uart.close()
