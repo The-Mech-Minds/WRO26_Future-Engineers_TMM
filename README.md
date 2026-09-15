@@ -85,20 +85,7 @@ The Arduino Uno is responsible for:
 
 ### System Data Flow Diagram
 
-```mermaid
-flowchart LR
-    A["USB Camera<br>640x480"] -->|Video Frames| B["Raspberry Pi 4B<br>Computer Vision<br>Navigation & Decision-Making"]
-
-    B -->|Serial Communication<br>servoValue, motorValue| C["Arduino Uno<br>Motion Controller"]
-
-    C -->|PWM Steering Signal| D["Steering Servo"]
-
-    C -->|Speed & Direction Signal| E["Motor Driver"]
-
-    E --> F["DC Motor"]
-
-    F --> G["Mechanical Drivetrain<br>Drive Wheels"]
-```
+<img src="others/System Data Flow Diagram.jpeg" width="120">
 
 ### Control Flow
 
