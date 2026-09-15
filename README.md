@@ -208,6 +208,50 @@ The final vehicle uses **two mechanically coupled DC motors driving a common rea
 ## 4. Power & Sensor Architecture
 
 ### 4.1 Power Distribution
+The robot uses separate power sources for the computing, propulsion, and control systems. This helps reduce voltage drops and electrical noise caused by the motors and steering servo.
+
+* **Raspberry Pi 4B:** Powered by a 30 W USB power bank providing 5 V / 3 A.
+* **Drive Motors:** Powered by a dedicated 7.4 V battery through the motor driver.
+* **Arduino Uno:** Powered by a separate 7.4 V battery through its VIN/barrel input.
+* **Steering Servo:** Powered through a regulated 5–6 V BEC/buck converter.
+* **Common Ground:** The Raspberry Pi, Arduino Uno, motor driver, BEC, and servo share a common ground reference for reliable control signals.
+
+#### Power Distribution Diagram
+
+```text
+             30 W USB Power Bank
+                    │
+                    ▼
+             Raspberry Pi 4B
+                    │
+                 UART
+                    │
+                    ▼
+               Arduino Uno
+                    ▲
+                    │
+              7.4 V Battery 2
+                    │
+                    └──── BEC / Buck 5–6 V
+                              │
+                              ▼
+                       Steering Servo
+
+
+              7.4 V Battery 1
+                    │
+                    ▼
+               Motor Driver
+                 /        \
+                ▼          ▼
+          DC Motor 1   DC Motor 2
+
+
+              COMMON GROUND
+```
+
+The use of separate batteries prevents the high-current drive motors from causing voltage fluctuations in the Raspberry Pi and Arduino control systems.
+
 ### 4.2 Electrical Circuit Diagram
 ### 4.3 Controller and Motor Driver Connections
 ### 4.4 Camera Placement
