@@ -1,11 +1,11 @@
-# WRO26_Future-Engineers_TMM
-Raspberry Pi-based self-driving robot built by Team TMM for the WRO Future Engineers category. First place at the WRO Oman National Qualifiers; competing at the WRO Open Championship Asia & Pacific 2026 in Hyderabad, India.
+**WRO-FUTURE-ENGINEERS-2026_THE MECH MINDS**
+   Welcome to the official technical repository for Team TMM's autonomous self-driving vehicle developed for the WRO Future Engineers category. This codebase powers our dual-microarchitecture robot engineered for precision wall-keeping, dynamic obstacle avoidance, robust lap counting, and automated parallel parking.
 
-Team members: 
+## Team members: 
 Ahmed Suleiman, Ismail Nassor, & Hajer Al Salmani. 
 Coach: Alex Savariyar.
 
-Table of contents:
+## Table of contents:
 1. system Overview.
 2. Hardware Components.
 3. Power System & Safety.
@@ -21,17 +21,28 @@ Table of contents:
 13. Troubleshooting.
 14. Repository Structure.
 
-1. System Overview:
-USB Camera → Raspberry Pi 4B
-GPIO → Motor Driver → Motor A + Motor B
-GPIO18 → Steering Servo
-Pi USB port → Arduino Uno (power + serial data, same cable)
-power:
-- 30W power bank → Raspberry Pi
-- 7.4V battery → Motor driver VM/GND
-- 5-6V BEC/buck → Servo +/-
-- All grounds → common ground
-The robot uses a single forward-facing USB camera for obstacle detection, a dual-channel DC motor driver for propulsion, and a hobby servo for front-wheel (Ackerman-style) steering. The Raspberry Pi 4B runs the full control loop camera capture, color classification, and GPIO output. Steering is now handled by a dedicated Arduino Uno: the Pi sends steering commands to the Arduino over USB serial, and the Arduino generates the servo's PWM signal directly, instead of the Pi generating that signal itself.
+## 1. System Overview:
+Our robot uses a hybrid control architecture in which the Raspberry Pi handles vision and autonomous decision-making, while the Arduino Uno manages real-time motion control. This separation improves processing efficiency and provides more stable motor and steering control.
+## Raspberry Pi – Vision and Decision-Making
+The Raspberry Pi acts as the main processing unit of the robot. It captures live video from the camera and runs the OpenCV-based autonomous navigation program.
+**Its main responsibilities include:**
+- Processing the camera image using selected Regions of Interest (ROI).
+- Detecting track boundaries and supporting wall-based navigation.
+- Identifying red and green traffic pillars and determining the required avoidance direction.
+- Detecting the blue lap-counting line and applying debounce logic to prevent repeated counting.
+- Tracking lap progress, where 12 validated blue-line detections correspond to three completed laps.
+- Managing the robot's operating states, including normal navigation, obstacle avoidance, lap completion, parking search, and parallel parking.
+- Sending the required steering and motor commands to the Arduino Uno.
+- Arduino Uno – Motion and Actuation Control
+The Arduino Uno acts as the low-level motion controller. It receives commands from the Raspberry Pi through serial communication and converts them into stable motor and steering outputs.
+The Raspberry Pi sends command packets in the following format: servoValue,motorValue
+**The Arduino is responsible for:**
+- Reading and validating incoming serial commands.
+- Controlling the steering servo position.
+- Applying the required steering-direction inversion based on the physical steering mechanism.
+- Controlling the drive motor speed and direction.
+- Maintaining consistent real-time actuator control independently of the Raspberry Pi's computer-vision workload.
+- Applying safety routines such as a communication watchdog to stop or place the robot in a safe state if valid commands are no longer received.
 
 2. Hardware components:
    - Controller: Raspberry Pi 4B - Runs python, OpenCV, motor and servo control.
