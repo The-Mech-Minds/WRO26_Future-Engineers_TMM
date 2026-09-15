@@ -30,8 +30,6 @@ void loop() {
       int motorVal = input.substring(commaIndex + 1).toInt();
       
       servoVal = constrain(servoVal, 1750, 2150);
-      
-      // Invert servo direction to fix the steering reversal
       int invertedServoVal = map(servoVal, 1750, 2150, 2150, 1750);
       steeringServo.writeMicroseconds(invertedServoVal);
       
@@ -40,7 +38,6 @@ void loop() {
     }
   }
   
-  // Watchdog safety: cut power if Pi signal drops
   if (millis() - lastCommandTime > WATCHDOG_TIMEOUT) {
     runMotor(0);
     steeringServo.writeMicroseconds(1880);
