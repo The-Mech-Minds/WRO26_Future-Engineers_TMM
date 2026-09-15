@@ -253,6 +253,22 @@ The robot uses separate power sources for the computing, propulsion, and control
 The use of separate batteries prevents the high-current drive motors from causing voltage fluctuations in the Raspberry Pi and Arduino control systems.
 
 ### 4.2 Electrical Circuit Diagram
+The complete electrical circuit of the robot was designed using **Cirkit Designer**. The diagram shows the connections between the Raspberry Pi 4B, Arduino Uno, motor driver, steering servo, drive motors, and the separate power supplies.
+
+![Electrical Circuit Diagram](docs/electrical/electrical_circuit_diagram.png)
+
+**Figure 4.2. Electrical architecture of the final robot.**
+
+The **Raspberry Pi 4B** performs computer vision, navigation, and autonomous decision-making. Motion commands are transmitted to the **Arduino Uno** through serial communication.
+
+The Arduino Uno then:
+
+* Generates the PWM signal for the steering servo.
+* Sends speed and direction control signals to the motor driver.
+* Controls both DC drive motors through the motor driver.
+
+The circuit also includes the separate power connections described in Section 4.1, including the Raspberry Pi power bank and the two 7.4 V battery supplies.
+
 ### 4.3 Controller and Motor Driver Connections
 ### 4.4 Camera Placement
 ### 4.5 Camera Calibration
