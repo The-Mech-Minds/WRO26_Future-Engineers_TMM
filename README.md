@@ -132,7 +132,7 @@ Using two motors provides additional torque while keeping both rear wheels mecha
 <img src="others/Chassis and Drivetrain.jpeg" width="500">
 The two front wheels are controlled by a single servo through a steering linkage.
 
-<img src="others/Steering Servo.jpeg" width="120"> 
+<img src="others/Steering Servo.jpeg" width="500"> 
 
 Steering is controlled independently from propulsion, giving the vehicle predictable automotive-style movement.
 
