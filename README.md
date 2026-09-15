@@ -183,27 +183,7 @@ The robot uses separate power sources for the computing and propulsion/control s
 - **Steering Servo:** Powered from the Arduino Uno 5 V output.
 - **Common Ground:** The Raspberry Pi, Arduino Uno, motor driver, servo, and battery grounds are connected to provide a common reference for control signals.
 
-30 W USB Power Bank
-        │
-        ▼
- Raspberry Pi 4B
-        │
-        │ UART
-        ▼
-   Arduino Uno ◄──── 7.4 V Battery 2
-        │
-        ├──── 5 V ─────► Steering Servo
-        │
-        └──── Control ──► Motor Driver
-                              ▲
-                              │
-                       7.4 V Battery 1
-                              │
-                         ┌────┴────┐
-                         ▼         ▼
-                     Motor 1    Motor 2
-
-                 COMMON GROUND
+<img src="others/power connection.jpeg" width="500"> 
 
 ### 4.2 Electrical Circuit Diagram
 The complete electrical circuit of the robot was designed using **Cirkit Designer**. The diagram shows the connections between the Raspberry Pi 4B, Arduino Uno, motor driver, steering servo, drive motors, and the separate power supplies.
