@@ -310,7 +310,56 @@ The image below shows the main image-processing regions used by the navigation a
 **Figure 4.4.2. Camera frame with the main Regions of Interest used for wall tracking, traffic-pillar detection, and lap-line detection.**
 
 ### 4.5 Camera Calibration
+### 4.5 Camera Calibration
+
+The computer-vision system was calibrated using images captured from the actual test field.
+
+Camera frames are captured in **BGR format** and converted to **HSV (Hue, Saturation, Value)** before colour detection. HSV was selected because it provides more reliable colour separation under changing lighting conditions.
+
+Calibration included:
+
+* Adjusting HSV thresholds for **red traffic pillars**.
+* Adjusting HSV thresholds for **green traffic pillars**.
+* Adjusting HSV thresholds for the **blue lap-reference line**.
+* Selecting suitable **Regions of Interest (ROI)**.
+* Adjusting minimum contour-area thresholds to reduce false detections.
+* Testing the thresholds under different lighting conditions.
+
+#### Colour Detection Calibration
+
+The following images show the main stages of the colour-detection process:
+
+**Original Camera Frame → HSV Mask → Detected Object**
+
+| Detection         | Processing                                               |
+| ----------------- | -------------------------------------------------------- |
+| **Green Pillar**  | Original Frame → Green HSV Mask → Green Pillar Detection |
+| **Red Pillar**    | Original Frame → Red HSV Mask → Red Pillar Detection     |
+| **Blue Lap Line** | Original Frame → Blue HSV Mask → Lap-Line Detection      |
+
+![HSV Calibration and Object Detection](docs/images/hsv_calibration.png)
+
+**Figure 4.5. HSV colour calibration and detection results for traffic pillars and the blue lap-reference line.**
+
+The final HSV ranges and contour thresholds were selected through repeated track testing to achieve stable detection while reducing false positives.
+
 ### 4.6 Power Budget
+The robot uses separate power sources for the Raspberry Pi, Arduino, and drive motors. This helps the robot operate more reliably during movement.
+
+| Component           |     Voltage | Approx. Current | Power Source                       |
+| ------------------- | ----------: | --------------: | ---------------------------------- |
+| **Raspberry Pi 4B** |         5 V |        ~1–1.5 A | 30 W USB power bank                |
+| **USB Camera**      |         5 V |          ~0.2 A | Raspberry Pi USB                   |
+| **Arduino Uno**     | 7.4 V input |       ~50–80 mA | 2 × 3.7 V 18650 batteries          |
+| **Steering Servo**  |         5 V |      ~0.2–0.6 A | Arduino 5 V                        |
+| **Motor Driver**    |       7.4 V |               — | 2 × 3.7 V 18650 batteries          |
+| **DC Motor 1**      |       7.4 V |      ~0.3–0.8 A | Motor battery through motor driver |
+| **DC Motor 2**      |       7.4 V |      ~0.3–0.8 A | Motor battery through motor driver |
+
+The Raspberry Pi uses a separate USB power bank, while the Arduino and motor driver use separate 18650 battery packs. This helps prevent the drive motors from affecting the Raspberry Pi during operation.
+
+*The current values shown are approximate and may vary depending on load.*
+
 ### 4.7 Electrical Safety and Failure Considerations
   3. Power System & Safty
      - A 30W power bank is sufficient for the Pi 4B, provided it supplies 5V/3A.
