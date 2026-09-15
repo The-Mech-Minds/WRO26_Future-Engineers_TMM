@@ -124,24 +124,11 @@ The drivetrain uses **two DC geared motors**, both connected through gears to th
 
 ### Chassis and Drivetrain
 
-```text
-     DC Motor 1        DC Motor 2
-          │                 │
-          ▼                 ▼
-        Gear              Gear
-           \               /
-            \             /
-             Common Rear Axle
-                /       \
-               ▼         ▼
-          Rear Left   Rear Right
-             Wheel       Wheel
-```
 
 Using two motors provides additional torque while keeping both rear wheels mechanically connected through the same axle.
 
 ### Steering Mechanism
-
+<img src="others/Chassis and Drivetrain.jpeg" width="120">
 The two front wheels are controlled by a single servo through a steering linkage.
 
 ```text
