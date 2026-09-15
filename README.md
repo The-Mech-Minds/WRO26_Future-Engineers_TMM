@@ -130,6 +130,81 @@ The robot uses the following main electronic, mechanical, and power components.
 | **7** | **Raspberry Pi Power Supply**     | <img src="images/power-bank.jpg" width="120">      | **30 W USB Power Bank — 5 V / 3 A output** — Provides a stable independent power supply for the Raspberry Pi.                                                                                                                                                                |
 | **8** | **Motor Power Supply**            | <img src="images/7.4v-battery.jpg" width="120">    | **7.4 V Battery Pack** — Supplies the motor driver's VM power rail for robot propulsion.                                                                                                                                                                                     |
 | **9** | **Servo Power Supply**            | <img src="images/bec-buck.jpg" width="120">        | **5–6 V Regulated BEC / Buck Converter** — Supplies stable power to the steering servo without drawing high current from the Raspberry Pi or Arduino power rails.                                                                                                            |
+## 3. Mobility & Mechanical Design
+
+Our robot uses a **four-wheel automotive-style layout** with front-wheel steering and rear-wheel propulsion.
+
+The drivetrain uses **two DC geared motors**, both connected through gears to the **same rear axle**. The rear wheels are therefore mechanically linked and are not controlled independently.
+
+### Chassis and Drivetrain
+
+```text
+     DC Motor 1        DC Motor 2
+          │                 │
+          ▼                 ▼
+        Gear              Gear
+           \               /
+            \             /
+             Common Rear Axle
+                /       \
+               ▼         ▼
+          Rear Left   Rear Right
+             Wheel       Wheel
+```
+
+Using two motors provides additional torque while keeping both rear wheels mechanically connected through the same axle.
+
+### Steering Mechanism
+
+The two front wheels are controlled by a single servo through a steering linkage.
+
+```text
+          Steering Servo
+                │
+                ▼
+        Steering Linkage
+           /         \
+          ▼           ▼
+    Front Left    Front Right
+       Wheel         Wheel
+```
+
+Steering is controlled independently from propulsion, giving the vehicle predictable automotive-style movement.
+
+### Torque and Speed Considerations
+
+The drivetrain was designed to balance **speed and torque**.
+
+Higher torque helps the robot accelerate reliably and overcome drivetrain friction, while excessive speed can reduce stability and make obstacle detection and steering corrections less reliable.
+
+The final motor speed and gearing are therefore selected based on **consistent track performance rather than maximum speed**.
+
+### Design Trade-Offs
+
+| Design Choice            | Advantage                          | Trade-Off                                    |
+| ------------------------ | ---------------------------------- | -------------------------------------------- |
+| **Two DC motors**        | Higher available torque            | Increased power consumption                  |
+| **Common rear axle**     | Simple and reliable drivetrain     | Some wheel slip may occur during tight turns |
+| **Gear transmission**    | Allows speed and torque adjustment | Requires accurate alignment                  |
+| **Front servo steering** | Precise directional control        | Requires careful calibration                 |
+
+### Mechanical Testing
+
+The drivetrain and steering system are tested for:
+
+* Straight-line movement
+* Steering-centre accuracy
+* Turning radius
+* Motor speed and torque
+* Gear alignment
+* Rear-wheel traction
+* Chassis stability
+
+Mechanical adjustments are made based on repeated track testing to improve reliability and consistency.
+
+### Final Mobility Architecture
+
+The final vehicle uses **two mechanically coupled DC motors driving a common rear axle through gears, combined with servo-controlled front-wheel steering**.
 
 
   3. Power System & Safty
