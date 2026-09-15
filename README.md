@@ -270,6 +270,20 @@ The Arduino Uno then:
 The circuit also includes the separate power connections described in Section 4.1, including the Raspberry Pi power bank and the two 7.4 V battery supplies.
 
 ### 4.3 Controller and Motor Driver Connections
+| From | To | Function |
+|---|---|---|
+| Raspberry Pi TX (`/dev/serial0`, Pin 8 / GPIO14) | Arduino Uno RX (Pin 0) | UART command communication |
+| Raspberry Pi GND | Arduino Uno GND | Common signal reference |
+| Arduino Pin 9 | Steering Servo Signal | Steering PWM control |
+| Arduino 5V | Steering Servo V+ | Servo power supply |
+| Arduino GND | Steering Servo GND | Servo ground |
+| Arduino Pin 3 | Motor Driver AIN1 | Motor direction control |
+| Arduino Pin 5 | Motor Driver AIN2 | Motor direction control |
+| Arduino Pin 4 | Motor Driver STBY | Motor driver standby / enable |
+| 7.4 V Battery 1 | Motor Driver VM | Drive motor power supply |
+| 7.4 V Battery 2 | Arduino Uno VIN / Barrel Input | Arduino power supply |
+| Motor Driver Outputs | DC Motor 1 & DC Motor 2 | Motor propulsion |
+| Common GND | Raspberry Pi, Arduino, Motor Driver & Batteries | Shared electrical reference |
 ### 4.4 Camera Placement
 ### 4.5 Camera Calibration
 ### 4.6 Power Budget
