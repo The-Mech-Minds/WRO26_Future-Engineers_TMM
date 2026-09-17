@@ -9,18 +9,16 @@ Coach: Alex Savariyar.
 ## Table of contents:
 1. system Overview.
 2. Hardware Components.
-3. Power System & Safety.
-4. Wiring.
-5. Raspberry Pi Setup.
-6. Software Environmnet.
-7. GPIO Pin Assignment.
-8. Design Decisions & Iteration.
-9. Autonomous Driving Strategy.
-10. Running Autonomously at Boot.
-11. Safe Shutdown.
-12. Pre-Run Checklist.
-13. Troubleshooting.
-14. Repository Structure.
+3. Mobility & Mechanical Design
+4. Power & Sensor Architecture.
+5. Software Architecture & Autonomous Strategy.
+6. Engineering Decisions & Iterations.
+7. Raspberry Pi & Arduino Software Setup.
+8. Final program structure.
+9. Testing & Validation.
+10. Autonomous Run Procedure.
+11. Troubleshooting.
+12. References.
 
 ## 1. System Overview
 
@@ -148,7 +146,7 @@ The final motor speed and gearing are therefore selected based on **consistent t
 
 | Design Choice            | Advantage                          | Trade-Off                                    |
 | ------------------------ | ---------------------------------- | -------------------------------------------- |
-| **Two DC motors**        | Higher available torque            | Increased power consumption                  |
+| **One DC motors**        | Higher available torque            | Increased power consumption                  |
 | **Common rear axle**     | Simple and reliable drivetrain     | Some wheel slip may occur during tight turns |
 | **Gear transmission**    | Allows speed and torque adjustment | Requires accurate alignment                  |
 | **Front servo steering** | Precise directional control        | Requires careful calibration                 |
@@ -244,6 +242,7 @@ The mounting height and viewing angle were adjusted through track testing. The l
 | **Mounting Position** | Front section of the robot |
 
 The final camera position was selected to balance **near-field track detection** with **forward visibility**, improving steering decisions and early detection of traffic pillars.
+
 #### Camera View
 
 The following image shows the forward view captured by the USB camera during track testing.
@@ -255,7 +254,6 @@ The image below shows the main image-processing regions used by the navigation a
 
 ![Camera ROI View](docs/images/camera_roi_view.jpg)
 
-**Figure 4.4.2. Camera frame with the main Regions of Interest used for wall tracking, traffic-pillar detection, and lap-line detection.**
 
 ### 4.5 Camera Calibration
 The computer-vision system was calibrated using images captured from the actual test field.
@@ -283,9 +281,6 @@ The following images show the main stages of the colour-detection process:
 | **Red Pillar**    | Original Frame → Red HSV Mask → Red Pillar Detection     |
 | **Blue Lap Line** | Original Frame → Blue HSV Mask → Lap-Line Detection      |
 
-![HSV Calibration and Object Detection](docs/images/hsv_calibration.png)
-
-**Figure 4.5. HSV colour calibration and detection results for traffic pillars and the blue lap-reference line.**
 
 The final HSV ranges and contour thresholds were selected through repeated track testing to achieve stable detection while reducing false positives.
 
@@ -300,8 +295,7 @@ The robot uses separate power sources for the Raspberry Pi, Arduino, and drive m
 | **Arduino Uno**     | 7.4 V input |       ~50–80 mA | 2 × 3.7 V 18650 batteries          |
 | **Steering Servo**  |         5 V |      ~0.2–0.6 A | Arduino 5 V                        |
 | **Motor Driver**    |       7.4 V |               — | 2 × 3.7 V 18650 batteries          |
-| **DC Motor 1**      |       7.4 V |      ~0.3–0.8 A | Motor battery through motor driver |
-| **DC Motor 2**      |       7.4 V |      ~0.3–0.8 A | Motor battery through motor driver |
+| **DC Motor**      |       7.4 V |      ~0.3–0.8 A | Motor battery through motor driver |
 
 The Raspberry Pi uses a separate USB power bank, while the Arduino and motor driver use separate 18650 battery packs. This helps prevent the drive motors from affecting the Raspberry Pi during operation.
 
@@ -371,7 +365,6 @@ flowchart TD
     L --> M["Stop"]
 ```
 
-**Figure 5.2. Main autonomous state machine.**
 
 ### 5.3 Camera Processing Pipeline
 
@@ -389,7 +382,6 @@ flowchart LR
     H --> I["Navigation Decision"]
 ```
 
-**Figure 5.3. Camera-processing pipeline.**
 
 ### 5.4 Track / Wall Navigation
 
@@ -444,7 +436,6 @@ flowchart TD
     G -->|Yes| H["Start Parking"]
 ```
 
-**Figure 5.4. Blue-line lap-counting logic.**
 
 ### 5.8 Serial Communication
 
@@ -480,7 +471,7 @@ flowchart LR
     F --> G["Stop"]
 ```
 
-**Figure 5.5. Automated parallel-parking sequence.**
+
 
 ### 5.10 Safety Watchdog / Fail-Safe
 
@@ -519,4 +510,123 @@ This architecture was retained because it provided more stable actuator control 
 
 Each major modification was tested on the track before being incorporated into the final robot. Changes were retained only when they improved reliability, steering stability, navigation accuracy, or overall consistency.
 
+7. Raspberry Pi & Arduino Software Setup
+The Raspberry Pi 4B runs Raspberry Pi OS and performs computer vision and navigation. Python, Open CV, NumPy and PySerial are used for image processing and communication. A 640x480 USB camera provides the visual input. The Raspberry Pi sends steering and motor commands to the Arduino Uno through serial communication at 9600 baud. The Arduino controls the steering servo and motor driver.
 
+7.1 Required Software
+```bash
+sudo apt update
+sudo apt install -y python3-opencv python3-numpy python3-serial v4l-utils
+```
+ 
+| Software / Library          | Purpose                                              |
+| ---------------------------- | ----------------------------------------------------- |
+| Raspberry Pi OS             | Operating system for the Raspberry Pi 4B             |
+| OpenCV                      | Camera capture and image processing                  |
+| NumPy                       | HSV thresholds, masks and numerical operations        |
+| PySerial                    | Serial communication between Raspberry Pi and Arduino |
+| Arduino IDE + Servo library | Arduino programming and stable servo control          |
+
+7.2 Camera and Serial Check
+The USB camera is verified before autonomous testing. The camera normally app ears as `/dev/video0` and is configured for 640x480 operation. The serial link is then tested to confirm that steering and motor commands reach the Arduino correctly.
+
+```bash
+ls /dev/video*
+v4l2-ctl --device=/dev/video0 --list-formats-ext
+```
+ 
+```python
+uart = serial.Serial('/dev/serial0', 9600, timeout=0.1)
+```
+ 
+## 8. Final Program Structure
+ 
+The final autonomous program is divided between the Raspberry Pi and Arduino Uno. The Raspberry Pi performs perception and decision-making, while the Arduino performs low-level actuator control. (See Section 5 for the full software architecture, state machine, and command protocol — this section is a quick reference summary of the two programs.)
+ 
+**USB Camera → Raspberry Pi → ROI / Image Processing → Wall + Pillar + Blue-Line Detection → Navigation Decision → `servoValue,motorValue` → Arduino Uno → Steering Servo + Motor Driver**
+ 
+### 8.1 Raspberry Pi Program
+ 
+* Captures frames from the USB camera.
+* Processes Regions of Interest (ROI).
+* Detects track boundaries, red/green pillars and the blue lap line.
+* Calculates steering and motor-speed commands.
+* Sends commands to the Arduino Uno.
+  
+### 8.2 Arduino Program
+ 
+* Receives and validates the serial command.
+* Generates the steering-servo output.
+* Controls motor direction and speed through the motor driver.
+* Stops the robot if communication is lost.
+ 
+## 9. Testing & Validation
+ 
+Subsystems are tested independently before full autonomous runs. Parameters are then tuned on the actual track until movement and detection are stable and repeatable.
+ 
+| Test                        | What is verified                                                                     |
+| ---------------------------- | --------------------------------------------------------------------------------------- |
+| Straight-line movement      | Check steering centre, drivetrain alignment and stable forward movement.             |
+| Steering calibration        | Verify left, centre and right steering limits and turning radius.                    |
+| Wall following               | Check centring, corner entry, single-wall recovery and oscillation.                  |
+| Red/green pillar avoidance  | Verify HSV detection, detection distance, avoidance direction and reduced turn speed. |
+| Blue-line counting          | Verify one count per physical line and correct three-lap total.                      |
+| Three-lap run               | Check complete autonomous navigation, serial reliability and repeatability.          |
+| Parking                     | Check positioning, reverse turn, counter-steer, final alignment and stop.            |
+ 
+During testing, steering values, motor speed, HSV thresholds, contour-area thresholds and maneuver timing are adjusted only when the change improves track performance and consistency.
+
+ 
+## 10. Autonomous Run Procedure
+ 
+Before each run, the team checks power, camera alignment, steering, drivetrain and communication. The Raspberry Pi then starts the vision program and continuously sends steering and motor commands to the Arduino.
+ 
+### 10.1 Pre-Run Checklist
+ 
+* Battery levels checked
+* Camera lens and angle checked
+* Steering centred
+* Wheels, gears and linkage move freely
+* Serial connection confirmed
+* Motor driver and wiring checked
+  
+### 10.2 Start, Fail-Safe and Shutdown
+ 
+```bash
+python3 autonomous_main.py
+```
+ 
+During operation, the Raspberry Pi continuously captures images, makes navigation decisions and sends commands to the Arduino. If serial communication is interrupted, the Arduino watchdog stops the motor and centres the steering.
+ 
+```bash
+sudo shutdown -h now
+```
+ 
+Power is disconnected only after the Raspberry Pi has completed shutdown.
+ 
+ 
+## 11. Troubleshooting
+ 
+The following checks cover the most common problems found during development and track testing.
+ 
+| Problem                                    | Check / Action                                                                                |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Camera not detected                        | Check USB connection, run `ls /dev/video*`, reconnect the camera and confirm `/dev/video0`.   |
+| Serial commands not received               | Check `/dev/serial0`, baud rate, TX/RX wiring and common ground.                              |
+| Servo jitter or unstable steering          | Check servo power, signal wiring and Arduino control; recalibrate centre and limits.          |
+| Robot does not travel straight             | Recheck steering centre, wheel/gear alignment, tyre traction and weight balance.              |
+| Wall following oscillates                  | Reduce steering gain/correction strength, reduce speed and recheck ROI/wall thresholds.       |
+| Pillar detected too early/late             | Retune HSV and minimum contour area using the actual track lighting.                          |
+| Blue line counted more than once           | Check transition/debounce logic and cooldown time.                                            |
+| Robot continues after communication loss   | Verify the Arduino watchdog and test by intentionally stopping serial commands.               |
+| Raspberry Pi freezes or shuts down         | Check the 5 V power source, USB connections and temperature.                                  |
+
+ 12. References
+1. World Robot Olympiad Association. WRO Future Engineers — General Rules and season resources. https://wro-association.org/competition/2026-season/
+2. OpenCV Documentation. Open Source Computer Vision Library. https://docs.opencv.org/
+3. Raspberry Pi Documentation. Raspberry Pi OS, configuration and hardware documentation. https://www.raspberrypi.com/documentation/
+4. Arduino Documentation. Arduino Uno and programming reference. https://docs.arduino.cc/
+5. Arduino Servo Library Reference. https://docs.arduino.cc/libraries/servo/
+6. PySerial Documentation. Python serial-port access. https://pyserial.readthedocs.io/
+7. NumPy Documentation. Numerical computing for Python. https://numpy.org/doc/
+8. Video4Linux Utilities (v4l-utils). Linux video-device utilities and controls. https://linuxtv.org/wiki/index.php/V4l-utils
