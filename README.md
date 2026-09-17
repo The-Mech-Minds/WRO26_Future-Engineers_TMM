@@ -188,7 +188,9 @@ The robot uses separate power sources for the computing and propulsion/control s
 ### 4.2 Electrical Circuit Diagram
 The complete electrical circuit of the robot was designed using **Cirkit Designer**. The diagram shows the connections between the Raspberry Pi 4B, Arduino Uno, motor driver, steering servo, drive motors, and the separate power supplies.
 
-![Electrical Circuit Diagram](docs/electrical/electrical_circuit_diagram.png)
+<img src="others/Pi + Arduino.png" width="500">
+
+<img src="others/Motor + Servo.png" width="500">
 
 **Figure 4.2. Electrical architecture of the final robot.**
 
