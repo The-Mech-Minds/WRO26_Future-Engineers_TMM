@@ -248,7 +248,7 @@ The final camera position was selected to balance **near-field track detection**
 
 The following image shows the forward view captured by the USB camera during track testing.
 
-<img src="oothers/camera view.jpeg" width="300"> 
+<img src="others/camera view.jpeg" width="300"> 
 
 **Figure 4.4.1. Forward camera view used for autonomous navigation.**
 
