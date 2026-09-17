@@ -192,7 +192,7 @@ The complete electrical circuit of the robot was designed using **Cirkit Designe
 
 <img src="others/Motor + Servo.png" width="500">
 
-**Figure 4.2. Electrical architecture of the final robot.**
+_[Note on the circuit diagram: The electrical diagram above was built in Cirkit Designer to illustrate how the components are connected to each other — it is not a physical layout or an exact part-for-part match of the robot. Some components shown (including the Raspberry Pi camera connection) use the closest available part in the diagram tool's library, since the exact parts used on the robot weren't available there. In particular, the diagram shows the camera connected through the Raspberry Pi's dedicated camera port, but the robot actually uses a standard USB camera connected through a USB port, not the Pi's camera connector. The diagram should be read as a reference for signal/power connections between components, not as a literal reproduction of the physical wiring.]_
 
 The **Raspberry Pi 4B** performs computer vision, navigation, and autonomous decision-making. Motion commands are transmitted to the **Arduino Uno** through serial communication.
 
