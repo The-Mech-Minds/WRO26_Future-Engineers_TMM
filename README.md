@@ -250,7 +250,6 @@ The following image shows the forward view captured by the USB camera during tra
 
 <img src="others/camera view.jpeg" width="300"> 
 
-**Figure 4.4.1. Forward camera view used for autonomous navigation.**
 
 The image below shows the main image-processing regions used by the navigation algorithm.
 
