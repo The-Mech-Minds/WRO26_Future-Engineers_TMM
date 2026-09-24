@@ -6,7 +6,7 @@ Our autonomous vehicle for the WRO Future Engineers category. This page document
 **Coach:** Alex Savariyar
 **Achievement:** First place, WRO Oman Future Engineers national qualifier, 6 June 2026.
 
-> **Current files:** [`main.py`](main.py) and [`vision.py`](vision.py) are the supplied Pi 5 programs. `vehicle.py` is required to run them but its complete current source is not yet available here. The `src/` and `arduino/` directories, along with existing vehicle photos, belong to the older Pi 4B + Arduino prototype. Its UART wiring and servo settings do not apply to this build.
+> **Current files:** [`src/main.py`](src/main.py) and [`src/vision.py`](src/vision.py) are the supplied Pi 5 programs. `src/vehicle.py` is required to run them but its complete current source is not yet available here. Other files in `src/`, the `arduino/` directory, and existing vehicle photos belong to the older Pi 4B + Arduino prototype. Its UART wiring and servo settings do not apply to this build.
 
 ## System overview
 
@@ -39,9 +39,9 @@ flowchart TD
 
 | File | Responsibility | Current repository status |
 | --- | --- | --- |
-| [`vision.py`](vision.py) | Camera acquisition, coloured line and pillar detection, dark wall ratios, direction lock, lap count, debug overlay | Uploaded from the latest supplied file |
-| [`main.py`](main.py) | Wait for start, choose the action each frame, handle corners and stopping | Uploaded exactly as supplied |
-| `vehicle.py` | Physical motor commands through the Build HAT | Required by `main.py`; complete current source still needed |
+| [`src/vision.py`](src/vision.py) | Camera acquisition, coloured line and pillar detection, dark wall ratios, direction lock, lap count, debug overlay | Uploaded from the latest supplied file |
+| [`src/main.py`](src/main.py) | Wait for start, choose the action each frame, handle corners and stopping | Uploaded exactly as supplied |
+| `src/vehicle.py` | Physical motor commands through the Build HAT | Required by `src/main.py`; complete current source still needed |
 
 The main loop checks conditions in this order:
 
@@ -145,13 +145,13 @@ The program initializes `Vision`, `Vehicle`, and `ForceSensor("C")`, stops the v
 
 ## Prototype history
 
-The existing `src/` Python files, `arduino/steering_servo.ino`, and older wiring diagrams describe the earlier **Raspberry Pi 4B + Arduino Uno + servo/DC motor** iteration. They remain as engineering history and are separate from the current Build HAT program.
+The other Python files in `src/`, `arduino/steering_servo.ino`, and older wiring diagrams describe the earlier **Raspberry Pi 4B + Arduino Uno + servo/DC motor** iteration. They remain as engineering history and are separate from the current Build HAT program.
 
 | Earlier prototype: front | Earlier prototype: top |
 | --- | --- |
 | ![Earlier Pi 4B and Arduino vehicle front view](v-photos/front.jpg) | ![Earlier Pi 4B and Arduino vehicle top view](v-photos/up.jpg) |
 
-To reproduce the current build, the repository still needs the exact `vehicle.py`, verified current-build photos, power and motor connections, and tested motor calibration values.
+To reproduce the current build, the repository still needs the exact `src/vehicle.py`, verified current-build photos, power and motor connections, and tested motor calibration values.
 
 ## References
 
