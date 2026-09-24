@@ -2,7 +2,7 @@
 
 <img src="docs/images/logo_tmm.jpeg" alt="The Mech Minds team logo" width="260">
 
-Our autonomous vehicle for the WRO Future Engineers category. This page documents the **current Raspberry Pi 5 + Build HAT version**. The [project guide](https://tmm-robot-control-guide.alexmartyn88.chatgpt.site) explains the decisions interactively.
+Our autonomous vehicle for the WRO Future Engineers category. This page documents the **current Raspberry Pi 5 + Build HAT version**.
 
 
 ## System overview
