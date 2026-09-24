@@ -1,12 +1,12 @@
 # The Mech Minds · WRO Future Engineers 2026
 
-Our autonomous vehicle for the WRO Future Engineers category. This page documents the **current Raspberry Pi 5 + Build HAT version** using the `main.py` and `vision.py` supplied during September 2026 testing.
+Our autonomous vehicle for the WRO Future Engineers category. This page documents the **current Raspberry Pi 5 + Build HAT version**. The [project guide](https://tmm-robot-control-guide.alexmartyn88.chatgpt.site) explains the decisions interactively.
 
 **Team:** Ahmed Suleiman, Hajer Talib Al Salmani, Ismail Nassor
 **Coach:** Alex Savariyar
 **Achievement:** First place, WRO Oman Future Engineers national qualifier, 6 June 2026.
 
-> **Code status:** The current `main.py`, `vision.py`, and `vehicle.py` are not yet uploaded to this repository. Files in `src/` and `arduino/`, and some existing photographs, document the earlier Pi 4B + Arduino prototype. Do not use that prototype's UART wiring, servo values, battery diagram, or Python launch command for the current vehicle. The details below come from the supplied `main.py` and `vision.py`; motor speed, steering positions, and Build HAT implementation must be verified from `vehicle.py` when it is provided.
+> **Current files:** [`main.py`](main.py) and [`vision.py`](vision.py) are the supplied Pi 5 programs. `vehicle.py` is required to run them but its complete current source is not yet available here. The `src/` and `arduino/` directories, along with existing vehicle photos, belong to the older Pi 4B + Arduino prototype. Its UART wiring and servo settings do not apply to this build.
 
 ## System overview
 
@@ -33,15 +33,15 @@ flowchart TD
 | Drive motor, port B | Drives the rear wheels |
 | Force Sensor, port C | Start and second-press stop |
 
-**Add Figure 2 — current robot photographs:** label Pi 5, Build HAT, USB camera, power connection, Force Sensor, port A steering motor, port B drive motor, steering linkage, and rear drivetrain. Check the revision before reusing any existing photo.
+**Current vehicle photos:** Add verified Pi 5 + Build HAT front, side, top, and underside views when available. The existing `v-photos/` images show the older Pi 4B + Arduino build and are displayed only under [Prototype history](#prototype-history).
 
 ## Software structure
 
 | File | Responsibility | Current repository status |
 | --- | --- | --- |
-| `vision.py` | Camera acquisition, coloured line and pillar detection, dark wall ratios, direction lock, lap count, debug overlay | Supplied in this conversation; upload the tested file |
-| `main.py` | Wait for start, choose the action each frame, handle corners and stopping | Supplied in this conversation; upload the tested file |
-| `vehicle.py` | Physical motor commands through the Build HAT | Mentioned by `main.py`, but its contents have not been supplied here |
+| [`vision.py`](vision.py) | Camera acquisition, coloured line and pillar detection, dark wall ratios, direction lock, lap count, debug overlay | Uploaded from the latest supplied file |
+| [`main.py`](main.py) | Wait for start, choose the action each frame, handle corners and stopping | Uploaded exactly as supplied |
+| `vehicle.py` | Physical motor commands through the Build HAT | Required by `main.py`; complete current source still needed |
 
 The main loop checks conditions in this order:
 
@@ -64,11 +64,11 @@ flowchart TD
     G -->|No| I["Side correction or straight"]
 ```
 
-**Figure 3. Decision order in the supplied `main.py`.** The obstacle response is issued on each frame; this version does not include a timed obstacle lock or a reverse manoeuvre in `main.py`.
+**Figure 2. Decision order in `main.py`.** The obstacle response is issued on each frame; this version does not include a timed obstacle lock or a reverse manoeuvre in `main.py`.
 
 ## Camera regions and detection
 
-The supplied `vision.py` sets the following pixel coordinates in a 640 × 480 frame. Coordinates are `(x1, y1, x2, y2)`; the bottom of the image has a larger `y` value.
+The current `vision.py` sets the following pixel coordinates in a 640 × 480 frame. Coordinates are `(x1, y1, x2, y2)`; the bottom of the image has a larger `y` value.
 
 | Purpose | ROI | Processing |
 | --- | --- | --- |
@@ -79,11 +79,17 @@ The supplied `vision.py` sets the following pixel coordinates in a 640 × 480 fr
 | Front wall | `(145, 205, 495, 350)` | Ratio of dark pixels |
 | Right wall | `(490, 260, 620, 455)` | Ratio of dark pixels |
 
-**Add Figure 4 — annotated camera frame:** draw all six ROIs over a real frame, with pixel coordinates and a legend. This is especially important for showing the larger direction ROI separately from the normal lap-line ROI.
+![Camera regions of interest at 640 × 480](docs/images/camera_rois.svg)
+
+**Figure 3. Exact regions from `vision.py`.** The diagram uses the source coordinates; a photograph of the current camera view can be added for calibration evidence.
 
 ### Direction detection
 
 Direction starts as `UNKNOWN`. Both orange and blue lines must be present inside the direction ROI. If their vertical centres differ by less than **20 pixels**, the observation is rejected. When orange has the larger `y` coordinate, it is closer to the bottom of the frame and the candidate direction is **CLOCKWISE**. When blue has the larger `y`, the candidate is **COUNTERCLOCKWISE**. The same ordering must be seen for **three consecutive frames** before direction locks. Once locked, the code does not reconsider it.
+
+![Clockwise and counterclockwise direction detection](docs/images/direction_lock.svg)
+
+**Figure 4. Direction lock from orange and blue line positions.**
 
 After direction locks, both start lines must disappear from the normal line ROI before lap counting is enabled. This prevents the start markings from being counted immediately.
 
@@ -137,9 +143,15 @@ The program initializes `Vision`, `Vehicle`, and `ForceSensor("C")`, stops the v
 | Lap count | Continuous three-lap video with 4, 8, 12 and 13 crossing log |
 | Emergency exits | Second button press, Q and camera-disconnect behaviour |
 
-## Repository history
+## Prototype history
 
-The existing `src/` Python files, `arduino/steering_servo.ino`, and several diagrams describe the earlier **Raspberry Pi 4B + Arduino Uno + servo/DC motor** iteration. They remain as engineering history. The current Pi 5 program must be uploaded as tested files before the repository can serve as a complete reproduction guide. Keep the two versions and their wiring instructions separate.
+The existing `src/` Python files, `arduino/steering_servo.ino`, and older wiring diagrams describe the earlier **Raspberry Pi 4B + Arduino Uno + servo/DC motor** iteration. They remain as engineering history and are separate from the current Build HAT program.
+
+| Earlier prototype: front | Earlier prototype: top |
+| --- | --- |
+| ![Earlier Pi 4B and Arduino vehicle front view](v-photos/front.jpg) | ![Earlier Pi 4B and Arduino vehicle top view](v-photos/up.jpg) |
+
+To reproduce the current build, the repository still needs the exact `vehicle.py`, verified current-build photos, power and motor connections, and tested motor calibration values.
 
 ## References
 
