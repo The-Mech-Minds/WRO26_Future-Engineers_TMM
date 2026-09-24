@@ -1,9 +1,9 @@
 # The Mech Minds · WRO Future Engineers 2026
 
+<img src="docs/images/logo_tmm.jpeg" alt="The Mech Minds team logo" width="260">
+
 Our autonomous vehicle for the WRO Future Engineers category. This page documents the **current Raspberry Pi 5 + Build HAT version**. The [project guide](https://tmm-robot-control-guide.alexmartyn88.chatgpt.site) explains the decisions interactively.
 
-
-> **Current files:** [`src/main.py`](src/main.py) and [`src/vision.py`](src/vision.py) are the supplied Pi 5 programs. `src/vehicle.py` now provides the Build HAT motor methods called by `main.py`; its speed, motor ports and steering positions are configurable defaults that need physical calibration. Other files in `src/` belong to the earlier Pi 4B + Arduino prototype. The old `arduino/` folder has been removed; its UART wiring and servo settings do not apply to this build.
 
 ## System overview
 
