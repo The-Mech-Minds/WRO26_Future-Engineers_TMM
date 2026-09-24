@@ -1,3 +1,11 @@
+# The Mech Minds — WRO Future Engineers 2026
+
+**Project website:** [Explore Team TMM's vehicle and strategy](https://the-mech-minds-wro-2026.alexmartyn88.chatgpt.site)
+
+> **Prototype status (September 2026):** The detailed hardware, wiring, servo values, serial protocol, and software setup below document our **earlier Raspberry Pi 4B + Arduino Uno + DC motor** build. Our more recent prototype uses a **Raspberry Pi 5, Build HAT, LEGO steering and drive motors, a USB camera, and a force-sensor start button**. Its Python program separates camera processing (`vision.py`), vehicle control (`vehicle.py`), and run logic (`main.py`). Do not apply the Arduino wiring, servo pulse widths, or UART commands below to the Build HAT prototype. Current motor limits, vision thresholds, lap logic, and parking behavior must be checked against the version of code actually installed on the robot.
+
+---
+
 **WRO-FUTURE-ENGINEERS-2026_THE MECH MINDS**
 
 Welcome to the official technical repository for Team TMM's autonomous self-driving vehicle developed for the WRO Future Engineers category. This codebase powers our dual-microarchitecture robot engineered for precision wall-keeping, dynamic obstacle avoidance, robust lap counting, and automated parallel parking.
