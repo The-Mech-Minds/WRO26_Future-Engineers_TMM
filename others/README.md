@@ -4,6 +4,6 @@ The current vehicle uses a Raspberry Pi 5, Raspberry Pi Build HAT, Hiwonder USB 
 
 ![Current robot hardware overview](current-hardware.svg)
 
-The diagram shows the control connections documented for this build. The supplied `main.py` confirms the Force Sensor on port C; verify the motor port assignments against the still-missing `src/vehicle.py` before wiring.
+The diagram shows the control connections documented for this build. The supplied `main.py` confirms the Force Sensor on port C; verify the motor port assignments against the configurable defaults in [`src/vehicle.py`](../src/vehicle.py) before wiring or driving.
 
 The older Raspberry Pi 4B and Arduino pictures have been moved to [`archive/pi4-arduino/`](../archive/pi4-arduino/). They document an earlier prototype.

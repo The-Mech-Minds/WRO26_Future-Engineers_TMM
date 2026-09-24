@@ -10,7 +10,7 @@
 <rect x="793" y="81" width="183" height="74" rx="13" fill="#a2661a"/><text x="884" y="111" font-size="16">LEGO steering</text><text x="884" y="134" font-size="16">motor*</text>
 <rect x="793" y="181" width="183" height="74" rx="13" fill="#a2661a"/><text x="884" y="210" font-size="16">LEGO drive</text><text x="884" y="233" font-size="16">motor*</text>
 <rect x="585" y="263" width="190" height="74" rx="13" fill="#146e85"/><text x="680" y="292" font-size="16">Force Sensor</text><text x="680" y="315" font-size="16">port C</text>
-<text x="500" y="362" font-size="14" fill="#adc0d2">*Motor port assignments require confirmation from vehicle.py</text>
+<text x="500" y="362" font-size="14" fill="#adc0d2">*Motor port assignments are provisional; calibrate on the robot</text>
 </g>
 <g stroke="#aee7e8" stroke-width="5" fill="none" stroke-linecap="round"><path d="M232 142h75"/><path d="M512 142h73"/><path d="M775 126h18"/><path d="M775 169q12 0 18 49"/><path d="M680 263v-77"/></g>
 </svg>

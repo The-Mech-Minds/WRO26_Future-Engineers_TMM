@@ -3,7 +3,7 @@
 Our autonomous vehicle for the WRO Future Engineers category. This page documents the **current Raspberry Pi 5 + Build HAT version**. The [project guide](https://tmm-robot-control-guide.alexmartyn88.chatgpt.site) explains the decisions interactively.
 
 
-> **Current files:** [`src/main.py`](src/main.py) and [`src/vision.py`](src/vision.py) are the supplied Pi 5 programs. `src/vehicle.py` is required to run them but its complete current source is not yet available here. Other files in `src/` belong to the earlier Pi 4B + Arduino prototype. The old `arduino/` folder has been removed; its UART wiring and servo settings do not apply to this build.
+> **Current files:** [`src/main.py`](src/main.py) and [`src/vision.py`](src/vision.py) are the supplied Pi 5 programs. `src/vehicle.py` now provides the Build HAT motor methods called by `main.py`; its speed, motor ports and steering positions are configurable defaults that need physical calibration. Other files in `src/` belong to the earlier Pi 4B + Arduino prototype. The old `arduino/` folder has been removed; its UART wiring and servo settings do not apply to this build.
 
 ## System overview
 
@@ -48,7 +48,7 @@ These five views show the Raspberry Pi 5 and Build HAT vehicle, with its high-mo
 | --- | --- | --- |
 | [`src/vision.py`](src/vision.py) | Camera acquisition, coloured line and pillar detection, dark wall ratios, direction lock, lap count, debug overlay | Supplied implementation; debug line counter corrected to show the 13-crossing stop target |
 | [`src/main.py`](src/main.py) | Wait for start, choose the action each frame, handle corners and stopping | Uploaded exactly as supplied |
-| `src/vehicle.py` | Physical motor commands through the Build HAT | Required by `src/main.py`; complete current source still needed |
+| [`src/vehicle.py`](src/vehicle.py) | Build HAT steering, driving, correction, stop, and centring | Added as a configurable starting implementation; calibrate on the robot |
 
 The main loop checks conditions in this order:
 
@@ -72,6 +72,10 @@ flowchart TD
 ```
 
 **Figure 2. Decision order in `main.py`.** The obstacle response is issued on each frame; this version does not include a timed obstacle lock or a reverse manoeuvre in `main.py`.
+
+### Vehicle calibration
+
+`src/vehicle.py` starts with port A for steering and port B for drive, a motor speed of 20, steering speed 30, centre 0°, full turn ±25°, and correction ±10°. These are **initial values, not measured settings**. Check wheel centring and rotation direction with the drive wheels lifted before a track run. Environment variables `TMM_STEERING_PORT`, `TMM_DRIVE_PORT`, `TMM_CENTER_ANGLE`, `TMM_TURN_ANGLE`, `TMM_CORRECTION_ANGLE`, `TMM_STEERING_SPEED`, `TMM_DRIVE_SPEED`, and `TMM_STEERING_DIRECTION` adjust the setup without editing the file. Set `TMM_STEERING_DIRECTION=-1` if left and right are reversed; use a negative drive speed if forward runs backward. The class sends nonblocking steering positions and keeps the drive motor running until `stop()`.
 
 ## Camera regions and detection
 
@@ -178,7 +182,7 @@ The program initializes `Vision`, `Vehicle`, and `ForceSensor("C")`, stops the v
 
 The other Python files in `src/` and the pictures in [`archive/pi4-arduino/`](archive/pi4-arduino/) describe the earlier **Raspberry Pi 4B + Arduino Uno + servo/DC motor** iteration. These are engineering history and are separate from the current Build HAT program. The old `arduino/` folder has been removed.
 
-To reproduce the current build, the repository still needs the exact `src/vehicle.py`, an underside photograph, power and motor connections, and tested motor calibration values.
+To reproduce the current build accurately, add an underside photograph, verify the power and motor connections, and record tested motor calibration values. The current `src/vehicle.py` uses provisional port A for steering, port B for drive, and port C for the Force Sensor in `main.py`. The `models/` folder contained no runtime model and has been removed; its older steering photograph is under [`archive/pi4-arduino/models/`](archive/pi4-arduino/models/).
 
 ## References
 
