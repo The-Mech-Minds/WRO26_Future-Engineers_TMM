@@ -178,11 +178,33 @@ The program initializes `Vision`, `Vehicle`, and `ForceSensor("C")`, stops the v
 | Lap count | Continuous three-lap video with 4, 8, 12 and 13 crossing log |
 | Emergency exits | Second button press, Q and camera-disconnect behaviour |
 
-## Prototype history
+## Prototype evolution
 
-The other Python files in `src/` and the pictures in [`archive/pi4-arduino/`](archive/pi4-arduino/) describe the earlier **Raspberry Pi 4B + Arduino Uno + servo/DC motor** iteration. These are engineering history and are separate from the current Build HAT program. The old `arduino/` folder has been removed.
+Our robot changed as we tested the camera view, turning behaviour, drivetrain, and power arrangement. The earlier [Pi 4B + Arduino photographs](archive/pi4-arduino/v-photos/) and [hardware illustrations](archive/pi4-arduino/others/) document that iteration. Its main navigation program is still available as [`src/autonomous_main.py`](src/autonomous_main.py). The old `arduino/` source folder has been removed, so the repository does not contain a complete runnable copy of that controller.
 
-To reproduce the current build accurately, add an underside photograph, verify the power and motor connections, and record tested motor calibration values. The current `src/vehicle.py` uses provisional port A for steering, port B for drive, and port C for the Force Sensor in `main.py`. The `models/` folder contained no runtime model and has been removed; its older steering photograph is under [`archive/pi4-arduino/models/`](archive/pi4-arduino/models/).
+| Earlier prototype: front | Earlier prototype: top |
+| --- | --- |
+| <img src="archive/pi4-arduino/v-photos/front.jpg" alt="Earlier Pi 4B and Arduino robot viewed from the front" width="360"> | <img src="archive/pi4-arduino/v-photos/up.jpg" alt="Earlier Pi 4B and Arduino robot viewed from above" width="360"> |
+
+### Earlier Pi 4B and Arduino approach
+
+The Raspberry Pi 4B captured a 640 × 480 USB camera frame and processed the lower half of the image. OpenCV HSV masks found red and green pillars and the blue floor line. A grayscale threshold of **120**, followed by morphological opening, found dark wall contours. When both side walls were visible, the code estimated the track centre from their inner edges and applied proportional steering. With only one wall visible, it steered away from that wall. If neither wall was visible, it retained the last left or right decision for **0.4 seconds** before returning to centre.
+
+Green pillars commanded left steering; red pillars commanded right. The earlier corner rule always commanded a **right** turn when a front wall was detected. Blue-line crossings were counted on a new visible-line edge, with a **1.5-second cooldown**. After **12 crossings**, the code entered a timed parking sequence: drive forward, reverse straight, reverse with left steering, reverse with right steering, then stop. Steering values of **1750 / 1880 / 2150 µs** (left / centre / right) and a motor command were sent as `servo,motor\n` over **9600-baud UART** to the Arduino. These values belong to the earlier servo controller, not to the Build HAT motors.
+
+### Why we revised it
+
+| What we found while developing | Change in the current revision | Practical effect or remaining gap |
+| --- | --- | --- |
+| Direct servo control from the Pi had produced jitter and intermittent holding during earlier tests. | The Pi 4B revision handed servo and motor actuation to Arduino. The current Pi 5 revision instead uses LEGO motors through the Build HAT. | `src/vehicle.py` now commands Build HAT motors directly. Its steering centre, limits, and speed are starting settings that still require physical calibration. |
+| Earlier power and weight layouts affected reliable movement and turning. The team revised the battery arrangement and rear drive during prototyping. | The current chassis uses a Pi 5, Build HAT, LEGO motors, and a high-mounted Hiwonder USB camera, as shown in the [current vehicle photos](#current-vehicle-photographs). | The repository does not yet specify a verified current power schematic or measured balance and traction results. Do not use the archived Pi 4B battery diagram to wire this vehicle. |
+| The old front-wall rule selected a right turn and therefore assumed a clockwise run. | `vision.py` compares orange and blue line positions, confirms the ordering for three frames, and locks **CLOCKWISE** or **COUNTERCLOCKWISE**. `main.py` uses that direction for a corner turn. | The direction lock enables both layouts, but an `UNKNOWN` direction at the first wall still needs a tested response. |
+| The old line counter used blue only and a timed cooldown; its final action was timed reverse parking. | The current code detects orange and blue lines, rearms after five clear frames, reports laps at crossings **4, 8, and 12**, and stops after crossing **13**. | The current program has **no reverse parking routine**. The old parking behaviour has not been carried over or validated on the LEGO chassis. |
+| A short turn memory helped the earlier code when the walls briefly disappeared. | The current navigation uses fixed left, front, and right image regions with dark-pixel ratios and explicit `FRONT_WALL` / `FRONT_CLEAR` states. | The current `main.py` does **not** implement the old 0.4-second fallback, a timed pillar bypass, or a corner-turn timeout. Those remain candidates for track testing. |
+
+The archived images and older scripts explain how the design developed; they are not setup instructions for the current Pi 5 vehicle. The `models/` folder contained no runtime model and was removed. Its older steering photograph is in [`archive/pi4-arduino/models/`](archive/pi4-arduino/models/).
+
+To reproduce the current build accurately, add an underside photograph, verify the power and motor connections, and record tested motor calibration values. `src/vehicle.py` defaults to steering port A and drive port B; `main.py` reads the Force Sensor on port C.
 
 ## References
 
