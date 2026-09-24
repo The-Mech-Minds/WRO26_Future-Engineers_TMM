@@ -3,8 +3,9 @@
 import time
 import cv2
 from buildhat import ForceSensor
-from vision import Vision
+
 from vehicle import Vehicle
+from vision import Vision
 
 vision = Vision()
 vehicle = Vehicle()
@@ -16,9 +17,7 @@ def show_video(data):
     frame = vision.draw_debug(frame, data)
     cv2.imshow("WRO LIVE", frame)
     key = cv2.waitKey(1) & 0xFF
-    if key == ord("q"):
-        return False
-    return True
+    return key != ord("q")
 
 
 print("Press button to start...")
@@ -26,9 +25,8 @@ vehicle.stop()
 
 while not button.is_pressed():
     data = vision.process()
-    if data["ok"]:
-        if not show_video(data):
-            raise SystemExit
+    if data["ok"] and not show_video(data):
+        raise SystemExit
     time.sleep(0.02)
 
 print("START")
@@ -46,11 +44,8 @@ try:
             break
 
         data = vision.process()
-        if not data["ok"]:
-            break
-
-        if not show_video(data):
-            print("Q PRESSED -> STOP")
+        if not data["ok"] or not show_video(data):
+            print("Q PRESSED OR VISION ERROR -> STOP")
             break
 
         direction = data["direction"]
@@ -75,40 +70,22 @@ try:
 
         elif front == "FRONT_WALL":
             print("FRONT WALL -> TURN")
+            turn_action = vehicle.right if direction == "CLOCKWISE" else vehicle.left
 
-            if direction == "CLOCKWISE":
-                while True:
-                    vehicle.right()
-                    data = vision.process()
-                    if not data["ok"]:
-                        raise KeyboardInterrupt
-                    if not show_video(data):
-                        raise KeyboardInterrupt
-                    if button.is_pressed():
-                        raise KeyboardInterrupt
-                    if data["race_complete"]:
-                        vehicle.straight()
-                        time.sleep(0.5)
-                        raise KeyboardInterrupt
-                    if data["front_state"] == "FRONT_CLEAR":
-                        break
+            while True:
+                turn_action()
+                data = vision.process()
 
-            elif direction == "COUNTERCLOCKWISE":
-                while True:
-                    vehicle.left()
-                    data = vision.process()
-                    if not data["ok"]:
-                        raise KeyboardInterrupt
-                    if not show_video(data):
-                        raise KeyboardInterrupt
-                    if button.is_pressed():
-                        raise KeyboardInterrupt
-                    if data["race_complete"]:
-                        vehicle.straight()
-                        time.sleep(0.5)
-                        raise KeyboardInterrupt
-                    if data["front_state"] == "FRONT_CLEAR":
-                        break
+                if not data["ok"] or not show_video(data) or button.is_pressed():
+                    raise KeyboardInterrupt
+
+                if data["race_complete"]:
+                    vehicle.straight()
+                    time.sleep(0.5)
+                    raise KeyboardInterrupt
+
+                if data["front_state"] == "FRONT_CLEAR":
+                    break
 
             vehicle.straight()
 
@@ -122,11 +99,7 @@ try:
                 vehicle.straight()
 
         print(
-            "DIR:", direction,
-            "| FRONT:", front,
-            "| F:", front_ratio,
-            "| OBS:", obstacle,
-            "| LINE:", data["line_count"]
+            f"DIR: {direction} | FRONT: {front} | F: {front_ratio} | OBS: {obstacle} | LINE: {data['line_count']}"
         )
 
 except KeyboardInterrupt:
