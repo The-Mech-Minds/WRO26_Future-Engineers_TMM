@@ -2,11 +2,8 @@
 
 Our autonomous vehicle for the WRO Future Engineers category. This page documents the **current Raspberry Pi 5 + Build HAT version**. The [project guide](https://tmm-robot-control-guide.alexmartyn88.chatgpt.site) explains the decisions interactively.
 
-**Team:** Ahmed Suleiman, Hajer Talib Al Salmani, Ismail Nassor
-**Coach:** Alex Savariyar
-**Achievement:** First place, WRO Oman Future Engineers national qualifier, 6 June 2026.
 
-> **Current files:** [`src/main.py`](src/main.py) and [`src/vision.py`](src/vision.py) are the supplied Pi 5 programs. `src/vehicle.py` is required to run them but its complete current source is not yet available here. Other files in `src/`, the `arduino/` directory, and existing vehicle photos belong to the older Pi 4B + Arduino prototype. Its UART wiring and servo settings do not apply to this build.
+> **Current files:** [`src/main.py`](src/main.py) and [`src/vision.py`](src/vision.py) are the supplied Pi 5 programs. `src/vehicle.py` is required to run them but its complete current source is not yet available here. Other files in `src/` belong to the earlier Pi 4B + Arduino prototype. The old `arduino/` folder has been removed; its UART wiring and servo settings do not apply to this build.
 
 ## System overview
 
@@ -33,13 +30,23 @@ flowchart TD
 | Drive motor, port B | Drives the rear wheels |
 | Force Sensor, port C | Start and second-press stop |
 
-**Current vehicle photos:** Add verified Pi 5 + Build HAT front, side, top, and underside views when available. The existing `v-photos/` images show the older Pi 4B + Arduino build and are displayed only under [Prototype history](#prototype-history).
+### Current vehicle photographs
+
+These five views show the Raspberry Pi 5 and Build HAT vehicle, with its high-mounted Hiwonder USB camera, Force Sensor, LEGO motors, frame, and wiring. The [hardware overview](others/current-hardware.svg) summarizes their connections. The front is the end facing the camera lens. An underside view of this revision has not been supplied.
+
+| Front, camera facing forward | Rear, camera board visible |
+| --- | --- |
+| <img src="v-photos/front.jpg" alt="Front view of the current robot with camera lens on mast" width="420"> | <img src="v-photos/back.jpg" alt="Rear view of the current robot with Force Sensor and camera board" width="420"> |
+
+| Left side | Right side | Top |
+| --- | --- | --- |
+| <img src="v-photos/left%20side.jpg" alt="Left side of the Pi 5 and Build HAT robot" width="300"> | <img src="v-photos/right%20side.jpg" alt="Right side of the Pi 5 and Build HAT robot" width="300"> | <img src="v-photos/up.jpg" alt="Overhead view showing the Raspberry Pi and camera mount" width="300"> |
 
 ## Software structure
 
 | File | Responsibility | Current repository status |
 | --- | --- | --- |
-| [`src/vision.py`](src/vision.py) | Camera acquisition, coloured line and pillar detection, dark wall ratios, direction lock, lap count, debug overlay | Uploaded from the latest supplied file |
+| [`src/vision.py`](src/vision.py) | Camera acquisition, coloured line and pillar detection, dark wall ratios, direction lock, lap count, debug overlay | Supplied implementation; debug line counter corrected to show the 13-crossing stop target |
 | [`src/main.py`](src/main.py) | Wait for start, choose the action each frame, handle corners and stopping | Uploaded exactly as supplied |
 | `src/vehicle.py` | Physical motor commands through the Build HAT | Required by `src/main.py`; complete current source still needed |
 
@@ -169,13 +176,9 @@ The program initializes `Vision`, `Vehicle`, and `ForceSensor("C")`, stops the v
 
 ## Prototype history
 
-The other Python files in `src/`, `arduino/steering_servo.ino`, and older wiring diagrams describe the earlier **Raspberry Pi 4B + Arduino Uno + servo/DC motor** iteration. They remain as engineering history and are separate from the current Build HAT program.
+The other Python files in `src/` and the pictures in [`archive/pi4-arduino/`](archive/pi4-arduino/) describe the earlier **Raspberry Pi 4B + Arduino Uno + servo/DC motor** iteration. These are engineering history and are separate from the current Build HAT program. The old `arduino/` folder has been removed.
 
-| Earlier prototype: front | Earlier prototype: top |
-| --- | --- |
-| ![Earlier Pi 4B and Arduino vehicle front view](v-photos/front.jpg) | ![Earlier Pi 4B and Arduino vehicle top view](v-photos/up.jpg) |
-
-To reproduce the current build, the repository still needs the exact `src/vehicle.py`, verified current-build photos, power and motor connections, and tested motor calibration values.
+To reproduce the current build, the repository still needs the exact `src/vehicle.py`, an underside photograph, power and motor connections, and tested motor calibration values.
 
 ## References
 

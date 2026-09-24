@@ -3,16 +3,12 @@
 import cv2
 import numpy as np
 
-# ============================================================
-# SETTINGS & CONSTANTS
-# ============================================================
 
 CAMERA_INDEX = 0
 WIDTH = 640
 HEIGHT = 480
 FPS = 30
 
-# ROIs: (x1, y1, x2, y2)
 OBSTACLE_ROI = (50, 210, 590, 455)
 DIRECTION_ROI = (20, 150, 620, 440)
 LINE_ROI = (40, 220, 600, 440)
@@ -20,25 +16,21 @@ LEFT_ROI = (20, 260, 150, 455)
 RIGHT_ROI = (490, 260, 620, 455)
 FRONT_ROI = (145, 205, 495, 350)
 
-# Wall Settings
 WALL_THRESHOLD = 100
 SIDE_WALL_HIGH = 0.22
 FRONT_WALL_HIGH = 0.15
 
-# Obstacle Settings
 MIN_RED_OBSTACLE_AREA = 1800
 MIN_GREEN_OBSTACLE_AREA = 1000
 MIN_OBSTACLE_HEIGHT = 35
 MAX_OBSTACLE_ASPECT = 1.8
 
-# Line Settings
 MIN_LINE_AREA = 80
 DIRECTION_CONFIRM_FRAMES = 3
 DIRECTION_MIN_GAP = 20
 LINE_CLEAR_FRAMES = 5
 TOTAL_LINE_COUNT = 13
 
-# HSV Color Ranges
 ORANGE_LOW = (8, 80, 70)
 ORANGE_HIGH = (30, 255, 255)
 
@@ -54,9 +46,6 @@ RED2_LOW = (173, 100, 60)
 RED2_HIGH = (180, 255, 255)
 
 
-# ============================================================
-# VISION CLASS
-# ============================================================
 
 class Vision:
 
@@ -443,7 +432,7 @@ class Vision:
         cv2.putText(frame, f"DIR: {data['direction']}", (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
         cv2.putText(frame, f"NAV: {data['navigation']}", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
         cv2.putText(frame, f"OBS: {data['obstacle']}", (10, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-        cv2.putText(frame, f"LINES: {data['line_count']}/12", (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        cv2.putText(frame, f"LINES: {data['line_count']}/{TOTAL_LINE_COUNT}", (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
         cv2.putText(frame, f"LAPS: {data['completed_laps']}/3", (10, 125), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
         cv2.putText(frame, data["front_state"], (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 2)
 
@@ -470,9 +459,6 @@ class Vision:
         print("[VISION] Closed")
 
 
-# ============================================================
-# STANDALONE TEST
-# ============================================================
 
 if __name__ == "__main__":
     vision = Vision()
