@@ -97,7 +97,7 @@ After direction locks, both start lines must disappear from the normal line ROI 
 
 The camera frame is converted to grayscale, blurred, thresholded at **100**, and morphologically opened before dark-pixel ratios are calculated. A front ROI ratio above **0.15** gives `FRONT_WALL`. A side ratio above **0.22** on only one side causes correction away from that side. When both sides are above threshold, the navigation hint is straight.
 
-At `FRONT_WALL`, clockwise travel calls `vehicle.right()` and counterclockwise travel calls `vehicle.left()` repeatedly until a processed frame reports `FRONT_CLEAR`. The inner loop still checks the camera, Q, the button, and race completion. It does **not** have a turn timeout or a side-wall clearance check in the supplied `main.py`.
+At `FRONT_WALL`, clockwise travel calls `vehicle.right()` and all other values, including `UNKNOWN`, call `vehicle.left()` repeatedly until a processed frame reports `FRONT_CLEAR`. The inner loop still checks the camera, Q, the button, and race completion. It does **not** have a turn timeout or a side-wall clearance check in the supplied `main.py`.
 
 ### Red and green pillars
 
@@ -126,7 +126,7 @@ The program initializes `Vision`, `Vehicle`, and `ForceSensor("C")`, stops the v
 
 **Current code checks before a full-speed run:**
 
-- If a front wall appears while direction is `UNKNOWN`, neither corner branch runs and `main.py` then calls `vehicle.straight()`. Ensure direction locks before the first corner or add a safe response.
+- If a front wall appears while direction is `UNKNOWN`, the current conditional selects `vehicle.left()` because it treats every non-clockwise value as counterclockwise. Ensure direction locks before the first corner or add an explicit safe response.
 - A corner turn can continue indefinitely if `FRONT_CLEAR` never appears. Add a bounded timeout or recovery before relying on this at speed.
 - The waiting-for-start and button-release loops are outside `try/finally`. Pressing Q before the start raises `SystemExit` without executing the main cleanup block.
 - The obstacle branch has no held bypass state or explicit wall-clearance check. Observe how the robot behaves when a pillar briefly leaves the camera view.
