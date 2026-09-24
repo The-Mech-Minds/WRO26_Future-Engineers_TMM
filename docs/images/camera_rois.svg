@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 530" role="img" aria-labelledby="t d">
+<title id="t">Camera regions of interest</title><desc id="d">The six image regions used for direction, lap lines, obstacles, and left, front and right walls in a 640 by 480 frame.</desc>
+<rect width="940" height="530" rx="18" fill="#0d1b2a"/><text x="28" y="36" fill="#eff7fa" font-family="Arial" font-size="23" font-weight="bold">Camera regions · 640 × 480</text>
+<g transform="translate(28 50)"><rect width="640" height="480" fill="#173143" stroke="#a5c3d0" stroke-width="2"/>
+<rect x="20" y="150" width="600" height="290" fill="#39e4c0" fill-opacity=".04" stroke="#39e4c0" stroke-width="3"/>
+<rect x="40" y="220" width="560" height="220" fill="none" stroke="#ffae62" stroke-width="3" stroke-dasharray="9 5"/>
+<rect x="50" y="210" width="540" height="245" fill="none" stroke="#c69dff" stroke-width="3" stroke-dasharray="2 6"/>
+<rect x="20" y="260" width="130" height="195" fill="#71acff" fill-opacity=".15" stroke="#71acff" stroke-width="3"/>
+<rect x="145" y="205" width="350" height="145" fill="#ff748b" fill-opacity=".13" stroke="#ff748b" stroke-width="3"/>
+<rect x="490" y="260" width="130" height="195" fill="#71acff" fill-opacity=".15" stroke="#71acff" stroke-width="3"/>
+<g fill="#fff" font-family="Arial" font-size="16" font-weight="bold"><text x="260" y="280">FRONT</text><text x="28" y="410">LEFT</text><text x="527" y="410">RIGHT</text></g></g>
+<g font-family="Arial" font-size="15" fill="#eaf4f8"><text x="699" y="84" font-size="19" font-weight="bold">Pixel coordinates</text>
+<circle cx="704" cy="130" r="6" fill="#39e4c0"/><text x="720" y="135">Direction</text><text x="720" y="155">20,150 → 620,440</text>
+<circle cx="704" cy="196" r="6" fill="#ffae62"/><text x="720" y="201">Lap line</text><text x="720" y="221">40,220 → 600,440</text>
+<circle cx="704" cy="262" r="6" fill="#c69dff"/><text x="720" y="267">Obstacles</text><text x="720" y="287">50,210 → 590,455</text>
+<circle cx="704" cy="328" r="6" fill="#ff748b"/><text x="720" y="333">Front wall</text><text x="720" y="353">145,205 → 495,350</text>
+<circle cx="704" cy="394" r="6" fill="#71acff"/><text x="720" y="399">Side walls</text><text x="720" y="419">Left: 20,260 → 150,455</text><text x="720" y="439">Right: 490,260 → 620,455</text>
+<text x="699" y="494" fill="#a9c9d4" font-size="13">Direction ROI runs until lock.</text></g></svg>
