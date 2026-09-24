@@ -81,7 +81,19 @@ The current `vision.py` sets the following pixel coordinates in a 640 × 480 fra
 
 ![Camera regions of interest at 640 × 480](docs/images/camera_rois.svg)
 
-**Figure 3. Exact regions from `vision.py`.** The diagram uses the source coordinates; a photograph of the current camera view can be added for calibration evidence.
+**Figure 3. Exact regions from `vision.py`.** The diagram uses the source coordinates.
+
+### Camera views from track testing
+
+These camera captures document field of view and detection overlays from a **development test program on 21 September 2026**. Its coloured boxes and pixel counters are not the output format of the current `src/vision.py`.
+
+| Unannotated track view | Blue line in view |
+| --- | --- |
+| <img src="docs/images/track-test-93029.jpg" alt="Forward camera view of the test track" width="420"> | <img src="docs/images/track-test-93130.jpg" alt="Forward camera view with blue floor line" width="420"> |
+
+The earlier overlay below shows central and side inspection regions used while tuning camera placement.
+
+<img src="docs/images/track-test-93517.jpg" alt="Development camera overlay marking central and side regions" width="640">
 
 ### Direction detection
 
@@ -98,6 +110,18 @@ After direction locks, both start lines must disappear from the normal line ROI 
 The camera frame is converted to grayscale, blurred, thresholded at **100**, and morphologically opened before dark-pixel ratios are calculated. A front ROI ratio above **0.15** gives `FRONT_WALL`. A side ratio above **0.22** on only one side causes correction away from that side. When both sides are above threshold, the navigation hint is straight.
 
 At `FRONT_WALL`, clockwise travel calls `vehicle.right()` and all other values, including `UNKNOWN`, call `vehicle.left()` repeatedly until a processed frame reports `FRONT_CLEAR`. The inner loop still checks the camera, Q, the button, and race completion. It does **not** have a turn timeout or a side-wall clearance check in the supplied `main.py`.
+
+### Front wall detection during development
+
+The following screenshots show how an earlier test overlay changed between a detected front wall and a clear front region. They are field-test evidence; their raw pixel counts and drawn rectangles should not be read as the current `vision.py` thresholds.
+
+| Wall detected | Front region clear |
+| --- | --- |
+| <img src="docs/images/track-test-95549.jpg" alt="Development overlay showing front wall triggered" width="420"> | <img src="docs/images/track-test-95757.jpg" alt="Development overlay showing front wall clear" width="420"> |
+
+| Additional front-wall test | Side and front readings |
+| --- | --- |
+| <img src="docs/images/track-test-100244.jpg" alt="Front wall trigger while a red track line crosses the frame" width="420"> | <img src="docs/images/track-test-101558.jpg" alt="Development overlay showing front and side wall readings" width="420"> |
 
 ### Red and green pillars
 
